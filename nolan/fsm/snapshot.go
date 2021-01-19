@@ -3,8 +3,8 @@ package fsm
 import (
 	"fmt"
 
+	"github.com/bdkiran/nolan/nolan/structs"
 	"github.com/hashicorp/raft"
-	"github.com/travisjeffery/jocko/jocko/structs"
 	"github.com/ugorji/go/codec"
 )
 

@@ -1,11 +1,11 @@
-package jocko
+package nolan
 
 import (
 	"time"
 
+	"github.com/bdkiran/nolan/log"
+	"github.com/bdkiran/nolan/protocol"
 	"github.com/cenkalti/backoff"
-	"github.com/travisjeffery/jocko/log"
-	"github.com/travisjeffery/jocko/protocol"
 )
 
 // Client is used to request other brokers.

@@ -1,12 +1,12 @@
-package jocko
+package nolan
 
 import (
 	"fmt"
 	"math/rand"
 	"sync"
 
+	"github.com/bdkiran/nolan/nolan/metadata"
 	"github.com/hashicorp/raft"
-	"github.com/travisjeffery/jocko/jocko/metadata"
 )
 
 type brokerLookup struct {

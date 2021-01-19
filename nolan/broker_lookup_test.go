@@ -1,11 +1,11 @@
-package jocko
+package nolan_test
 
 import (
 	"testing"
 
+	"github.com/bdkiran/nolan/nolan/metadata"
 	"github.com/hashicorp/raft"
 	"github.com/stretchr/testify/require"
-	"github.com/travisjeffery/jocko/jocko/metadata"
 )
 
 func TestNewBrokerLookup(t *testing.T) {

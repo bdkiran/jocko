@@ -1,6 +1,6 @@
 // +build !race
 
-package jocko
+package nolan
 
 import (
 	"bytes"
@@ -19,10 +19,10 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/require"
 
-	"github.com/travisjeffery/jocko/jocko/config"
-	"github.com/travisjeffery/jocko/jocko/structs"
-	"github.com/travisjeffery/jocko/log"
-	"github.com/travisjeffery/jocko/protocol"
+	"github.com/bdkiran/nolan/log"
+	"github.com/bdkiran/nolan/nolan/config"
+	"github.com/bdkiran/nolan/nolan/structs"
+	"github.com/bdkiran/nolan/protocol"
 )
 
 func TestBroker_Run(t *testing.T) {

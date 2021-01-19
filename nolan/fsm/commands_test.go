@@ -3,9 +3,9 @@ package fsm
 import (
 	"testing"
 
+	"github.com/bdkiran/nolan/nolan/structs"
 	"github.com/hashicorp/raft"
 	stdopentracing "github.com/opentracing/opentracing-go"
-	"github.com/travisjeffery/jocko/jocko/structs"
 )
 
 func TestRegisterNode(t *testing.T) {

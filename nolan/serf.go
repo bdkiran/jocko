@@ -1,13 +1,13 @@
-package jocko
+package nolan
 
 import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/bdkiran/nolan/log"
+	"github.com/bdkiran/nolan/nolan/metadata"
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/serf/serf"
-	"github.com/travisjeffery/jocko/jocko/metadata"
-	"github.com/travisjeffery/jocko/log"
 )
 
 const (

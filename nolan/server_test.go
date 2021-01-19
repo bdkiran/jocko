@@ -1,4 +1,4 @@
-package jocko_test
+package nolan_test
 
 import (
 	"bytes"
@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/bdkiran/nolan/log"
+	jocko "github.com/bdkiran/nolan/nolan"
+	"github.com/bdkiran/nolan/nolan/config"
+	"github.com/bdkiran/nolan/protocol"
 	cluster "github.com/bsm/sarama-cluster"
 	"github.com/hashicorp/consul/testutil/retry"
 	ti "github.com/mitchellh/go-testing-interface"
 	"github.com/stretchr/testify/require"
-	"github.com/travisjeffery/jocko/jocko"
-	"github.com/travisjeffery/jocko/jocko/config"
-	"github.com/travisjeffery/jocko/log"
-	"github.com/travisjeffery/jocko/protocol"
 )
 
 const (

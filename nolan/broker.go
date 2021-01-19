@@ -1,4 +1,4 @@
-package jocko
+package nolan
 
 import (
 	"bytes"
@@ -14,6 +14,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/bdkiran/nolan/commitlog"
+	"github.com/bdkiran/nolan/log"
+	"github.com/bdkiran/nolan/nolan/config"
+	"github.com/bdkiran/nolan/nolan/fsm"
+	"github.com/bdkiran/nolan/nolan/metadata"
+	"github.com/bdkiran/nolan/nolan/structs"
+	"github.com/bdkiran/nolan/nolan/util"
+	"github.com/bdkiran/nolan/protocol"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
@@ -21,14 +29,6 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	"github.com/travisjeffery/jocko/commitlog"
-	"github.com/travisjeffery/jocko/jocko/config"
-	"github.com/travisjeffery/jocko/jocko/fsm"
-	"github.com/travisjeffery/jocko/jocko/metadata"
-	"github.com/travisjeffery/jocko/jocko/structs"
-	"github.com/travisjeffery/jocko/jocko/util"
-	"github.com/travisjeffery/jocko/log"
-	"github.com/travisjeffery/jocko/protocol"
 )
 
 var (

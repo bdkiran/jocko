@@ -1,4 +1,4 @@
-package jocko
+package nolan
 
 import (
 	"fmt"
@@ -7,14 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bdkiran/nolan/log"
+	"github.com/bdkiran/nolan/nolan/fsm"
+	"github.com/bdkiran/nolan/nolan/metadata"
+	"github.com/bdkiran/nolan/nolan/structs"
+	"github.com/bdkiran/nolan/protocol"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/hashicorp/serf/serf"
-	"github.com/travisjeffery/jocko/jocko/fsm"
-	"github.com/travisjeffery/jocko/jocko/metadata"
-	"github.com/travisjeffery/jocko/jocko/structs"
-	"github.com/travisjeffery/jocko/log"
-	"github.com/travisjeffery/jocko/protocol"
 )
 
 const (

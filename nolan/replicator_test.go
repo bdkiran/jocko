@@ -1,4 +1,4 @@
-package jocko_test
+package nolan_test
 
 import (
 	"bytes"
@@ -9,10 +9,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/travisjeffery/jocko/jocko"
-	"github.com/travisjeffery/jocko/jocko/structs"
-	"github.com/travisjeffery/jocko/mock"
-	"github.com/travisjeffery/jocko/testutil"
+	"github.com/bdkiran/noaln/testutil"
+	"github.com/bdkiran/nolan/mock"
+	jocko "github.com/bdkiran/nolan/nolan"
+	"github.com/bdkiran/nolan/nolan/structs"
 )
 
 func TestBroker_Replicate(t *testing.T) {

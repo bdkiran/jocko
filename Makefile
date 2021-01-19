@@ -1,4 +1,6 @@
-BUILD_PATH := cmd/jocko/jocko
+#This needs to get rebuilt....
+#For now just build manually
+BUILD_PATH := /
 DOCKER_TAG := latest
 
 all: test

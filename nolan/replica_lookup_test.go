@@ -1,10 +1,10 @@
-package jocko
+package nolan
 
 import (
 	"testing"
 
+	"github.com/bdkiran/nolan/nolan/structs"
 	"github.com/stretchr/testify/require"
-	"github.com/travisjeffery/jocko/jocko/structs"
 )
 
 func TestNewReplicaLookup(t *testing.T) {

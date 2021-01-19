@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bdkiran/nolan/nolan/structs"
 	stdopentracing "github.com/opentracing/opentracing-go"
-	"github.com/travisjeffery/jocko/jocko/structs"
 )
 
 func testStore(t *testing.T) *Store {

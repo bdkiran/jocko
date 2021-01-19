@@ -1,4 +1,4 @@
-package jocko
+package nolan
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/travisjeffery/jocko/protocol"
+	"github.com/bdkiran/nolan/protocol"
 )
 
 type Context struct {

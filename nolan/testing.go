@@ -1,4 +1,4 @@
-package jocko
+package nolan
 
 import (
 	"fmt"
@@ -6,11 +6,11 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/bdkiran/nolan/nolan/config"
 	"github.com/hashicorp/consul/testutil/retry"
 	"github.com/hashicorp/raft"
 	"github.com/mitchellh/go-testing-interface"
 	dynaport "github.com/travisjeffery/go-dynaport"
-	"github.com/travisjeffery/jocko/jocko/config"
 
 	"github.com/uber/jaeger-lib/metrics"
 

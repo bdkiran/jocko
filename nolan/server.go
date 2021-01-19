@@ -1,4 +1,4 @@
-package jocko
+package nolan
 
 import (
 	"context"
@@ -8,11 +8,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bdkiran/nolan/log"
+	"github.com/bdkiran/nolan/nolan/config"
+	"github.com/bdkiran/nolan/protocol"
 	"github.com/davecgh/go-spew/spew"
 	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/travisjeffery/jocko/jocko/config"
-	"github.com/travisjeffery/jocko/log"
-	"github.com/travisjeffery/jocko/protocol"
 )
 
 type contextKey string

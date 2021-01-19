@@ -3,8 +3,8 @@ package fsm
 import (
 	"fmt"
 
-	"github.com/travisjeffery/jocko/jocko/structs"
-	"github.com/travisjeffery/jocko/log"
+	"github.com/bdkiran/nolan/log"
+	"github.com/bdkiran/nolan/nolan/structs"
 )
 
 func init() {

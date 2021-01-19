@@ -1,4 +1,4 @@
-package jocko
+package nolan
 
 import "github.com/go-kit/kit/metrics/prometheus"
 
