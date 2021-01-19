@@ -1,17 +1,12 @@
 # Jocko used with a Sarama client example
 
-This example shows Sarama producing and consuming with Jocko.
-
-## Setup
-
-```
-$ go get github.com/travisjeffery/jocko/...
-$ cd $GOPATH/src/github.com/travisjeffery/jocko/examples/sarama
-```
+This example shows Sarama producing and consuming with nolan.
 
 ## Run
+After building the project...
 
 ```
+$ cd /nolan/_examples/sarama
 $ go run main.go
 ```
 

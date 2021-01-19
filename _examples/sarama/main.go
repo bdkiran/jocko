@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/Shopify/sarama"
-	"github.com/travisjeffery/jocko/jocko"
-	"github.com/travisjeffery/jocko/jocko/config"
-	"github.com/travisjeffery/jocko/log"
-	"github.com/travisjeffery/jocko/protocol"
+	"github.com/bdkiran/nolan/log"
+	"github.com/bdkiran/nolan/nolan"
+	"github.com/bdkiran/nolan/nolan/config"
+	"github.com/bdkiran/nolan/protocol"
 )
 
 type check struct {
@@ -89,15 +89,17 @@ func main() {
 		}
 		i := 0
 		for msg := range partition.Messages() {
-			fmt.Printf("msg partition [%d] offset [%d]\n", msg.Partition, msg.Offset)
+			log.Info.Println("-----------Consuming new message---------------------")
+			log.Info.Printf("msg partition [%d] offset [%d]\n", msg.Partition, msg.Offset)
 			check := pmap[partitionID][i]
 			if string(msg.Value) != check.message {
-				log.Fatal.Printf("msg values not equal: partition: %d: offset: %d", msg.Partition, msg.Offset)
+				log.Error.Fatalf("msg values not equal: partition: %d: offset: %d", msg.Partition, msg.Offset)
 			}
 			if msg.Offset != check.offset {
-				log.Fatal.Printf("msg offsets not equal: partition: %d: offset: %d", msg.Partition, msg.Offset)
+				log.Error.Fatalf("msg offsets not equal: partition: %d: offset: %d", msg.Partition, msg.Offset)
 			}
 			log.Info.Printf("msg is ok: partition: %d: offset: %d", msg.Partition, msg.Offset)
+			log.Info.Println(string(msg.Value))
 			i++
 			checked++
 			fmt.Printf("i: %d, len: %d\n", i, len(pmap[partitionID]))
@@ -113,11 +115,12 @@ func main() {
 			}
 		}
 	}
-	fmt.Printf("producer and consumer worked! %d messages ok\n", totalChecked)
+	log.Info.Println("===========================================================")
+	log.Info.Printf("producer and consumer worked! %d messages ok\n", totalChecked)
 }
 
-func setup() (*jocko.Server, func()) {
-	c, cancel := jocko.NewTestServer(&testing.T{}, func(cfg *config.Config) {
+func setup() (*nolan.Server, func()) {
+	c, _ := nolan.NewTestServer(&testing.T{}, func(cfg *config.Config) {
 		cfg.Bootstrap = true
 		cfg.BootstrapExpect = 1
 		cfg.StartAsLeader = true
@@ -127,7 +130,7 @@ func setup() (*jocko.Server, func()) {
 		os.Exit(1)
 	}
 
-	conn, err := jocko.Dial("tcp", c.Addr().String())
+	conn, err := nolan.Dial("tcp", c.Addr().String())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error connecting to broker: %v\n", err)
 		os.Exit(1)
@@ -152,7 +155,7 @@ func setup() (*jocko.Server, func()) {
 	}
 
 	return c, func() {
-		cancel()
+		//cancel()
 		c.Shutdown()
 		os.RemoveAll(logDir)
 	}
