@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bdkiran/nolan/nolan"
+	"github.com/bdkiran/nolan/nolan/config"
 	"github.com/spf13/cobra"
 	gracefully "github.com/tj/go-gracefully"
-	"github.com/travisjeffery/jocko/jocko"
-	"github.com/travisjeffery/jocko/jocko/config"
 	"github.com/uber/jaeger-lib/metrics"
 
 	"github.com/hashicorp/memberlist"
@@ -74,13 +74,13 @@ func run(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 
-	broker, err := jocko.NewBroker(brokerCfg, tracer)
+	broker, err := nolan.NewBroker(brokerCfg, tracer)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error starting broker: %v\n", err)
 		os.Exit(1)
 	}
 
-	srv := jocko.NewServer(brokerCfg, broker, nil, tracer, closer.Close)
+	srv := nolan.NewServer(brokerCfg, broker, nil, tracer, closer.Close)
 	if err := srv.Start(context.Background()); err != nil {
 		fmt.Fprintf(os.Stderr, "error starting server: %v\n", err)
 		os.Exit(1)

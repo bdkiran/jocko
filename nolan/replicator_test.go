@@ -7,12 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bdkiran/nolan/nolan"
 	"github.com/stretchr/testify/require"
+	"github.com/travisjeffery/jocko/jocko"
 
-	"github.com/bdkiran/noaln/testutil"
 	"github.com/bdkiran/nolan/mock"
-	jocko "github.com/bdkiran/nolan/nolan"
 	"github.com/bdkiran/nolan/nolan/structs"
+	"github.com/bdkiran/nolan/testutil"
 )
 
 func TestBroker_Replicate(t *testing.T) {
@@ -30,7 +31,7 @@ func TestBroker_Replicate(t *testing.T) {
 		Log:      c,
 	}
 
-	replicator := jocko.NewReplicator(jocko.ReplicatorConfig{
+	replicator := nolan.NewReplicator(nolan.ReplicatorConfig{
 		MinBytes:    5,
 		MaxWaitTime: 250 * time.Millisecond,
 	}, replica, l)

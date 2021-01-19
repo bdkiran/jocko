@@ -61,12 +61,14 @@ require (
 	github.com/travisjeffery/go-dynaport v0.0.0-20171203090423-24009f4f2f49
 	github.com/travisjeffery/jocko v0.0.0-20201227025536-9613083803fc
 	github.com/tysontate/gommap v0.0.0-20131202084435-e87a6e482c2c
-	github.com/uber/jaeger-client-go v2.11.2+incompatible
-	github.com/uber/jaeger-lib v1.3.1
+	github.com/uber/jaeger-client-go v2.22.1+incompatible
+	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/ugorji/go v0.0.0-20180112141927-9831f2c3ac10
+	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a // indirect
 	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78
+	golang.org/x/tools v0.0.0-20190524140312-2c0ae7006135
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	upspin.io v0.0.0-20180517055408-63f1073c7a3a
