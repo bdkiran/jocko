@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/travisjeffery/jocko/jocko/config"
-	"github.com/travisjeffery/jocko/protocol"
+	"github.com/bdkiran/nolan/nolan/config"
+	"github.com/bdkiran/nolan/protocol"
 )
 
 const (

@@ -3,7 +3,7 @@ package mock
 import (
 	"strconv"
 
-	"github.com/travisjeffery/jocko/protocol"
+	"github.com/bdkiran/nolan/protocol"
 )
 
 // Client for testing

@@ -1,4 +1,4 @@
-# Jocko cluster example
+# nolan cluster example
 
 This will start a local three node cluster.
 

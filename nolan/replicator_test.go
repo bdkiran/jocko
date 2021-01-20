@@ -9,7 +9,6 @@ import (
 
 	"github.com/bdkiran/nolan/nolan"
 	"github.com/stretchr/testify/require"
-	"github.com/travisjeffery/jocko/jocko"
 
 	"github.com/bdkiran/nolan/mock"
 	"github.com/bdkiran/nolan/nolan/structs"
@@ -20,7 +19,7 @@ func TestBroker_Replicate(t *testing.T) {
 	c := newCommitLog()
 	l := mock.NewClient(4)
 
-	replica := &jocko.Replica{
+	replica := &nolan.Replica{
 		Partition: structs.Partition{
 			Topic:  "test",
 			ID:     0,

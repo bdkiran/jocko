@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bdkiran/nolan/nolan/config"
 	dynaport "github.com/travisjeffery/go-dynaport"
-	"github.com/travisjeffery/jocko/jocko/config"
 )
 
 func TestConfig(t *testing.T) (string, *config.Config) {

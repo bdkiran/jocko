@@ -3,13 +3,14 @@ package nolan_test
 import (
 	"testing"
 
+	"github.com/bdkiran/nolan/nolan"
 	"github.com/bdkiran/nolan/nolan/metadata"
 	"github.com/hashicorp/raft"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewBrokerLookup(t *testing.T) {
-	lookup := NewBrokerLookup()
+	lookup := nolan.NewBrokerLookup()
 	addr := "10.0.0.1:9092"
 	id := metadata.NodeID(1)
 	svr := &metadata.Broker{ID: id, RaftAddr: addr}
