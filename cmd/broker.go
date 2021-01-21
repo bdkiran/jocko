@@ -3,10 +3,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/bdkiran/nolan/nolan"
@@ -29,7 +31,8 @@ var (
 		Run:   run,
 	}
 
-	brokerCfg = config.DefaultConfig()
+	brokerCfg  = config.DefaultConfig()
+	nodeNumber int32
 )
 
 func init() {
@@ -44,6 +47,8 @@ func init() {
 	brokerCmd.Flags().StringSliceVar(&brokerCfg.StartJoinAddrsWAN, "join-wan", nil, "Address of an broker serf to join -wan at start time. Can be specified multiple times.")
 	brokerCmd.Flags().Int32Var(&brokerCfg.ID, "id", 0, "Broker ID")
 
+	createTestBrokerCmd := &cobra.Command{Use: "test", Short: "Create a test broker", Run: createTestBroker, Args: cobra.NoArgs}
+	brokerCmd.AddCommand(createTestBrokerCmd)
 	//cli.AddCommand(brokerCmd)
 }
 
@@ -95,6 +100,100 @@ func run(cmd *cobra.Command, args []string) {
 		fmt.Fprintf(os.Stderr, "error shutting down store: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func createTestBroker(cmd *cobra.Command, args []string) {
+	fmt.Println("Starting test broker...")
+	//ports := dynaport.Get(4)
+	nodeID := atomic.AddInt32(&nodeNumber, 1)
+
+	cfg := jaegercfg.Configuration{
+		Sampler: &jaegercfg.SamplerConfig{
+			Type:  jaeger.SamplerTypeConst,
+			Param: 1,
+		},
+		Reporter: &jaegercfg.ReporterConfig{
+			LogSpans: true,
+		},
+	}
+
+	// jLogger := jaegerlog.StdLogger
+	jMetricsFactory := metrics.NullFactory
+
+	tracer, closer, err := cfg.New(
+		"nolan",
+		// jaegercfg.Logger(jLogger),
+		jaegercfg.Metrics(jMetricsFactory),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	tmpDir, err := ioutil.TempDir("", fmt.Sprintf("jocko-test-server-%d", nodeID))
+	if err != nil {
+		panic(err)
+	}
+
+	config := config.DefaultConfig()
+	config.ID = nodeID
+	config.NodeName = fmt.Sprintf("%s-node-%d", "test", nodeID)
+	config.DataDir = tmpDir
+	config.Addr = fmt.Sprintf("%s:%d", "127.0.0.1", 9092)
+	config.RaftAddr = fmt.Sprintf("%s:%d", "127.0.0.1", 9093)
+	config.SerfLANConfig.MemberlistConfig.BindAddr = "127.0.0.1"
+	config.SerfLANConfig.MemberlistConfig.BindPort = 9094
+	config.LeaveDrainTime = 1 * time.Millisecond
+	config.ReconcileInterval = 300 * time.Millisecond
+
+	// Tighten the Serf timing
+	config.SerfLANConfig.MemberlistConfig.BindAddr = "127.0.0.1"
+	config.SerfLANConfig.MemberlistConfig.SuspicionMult = 2
+	config.SerfLANConfig.MemberlistConfig.RetransmitMult = 2
+	config.SerfLANConfig.MemberlistConfig.ProbeTimeout = 50 * time.Millisecond
+	config.SerfLANConfig.MemberlistConfig.ProbeInterval = 100 * time.Millisecond
+	config.SerfLANConfig.MemberlistConfig.GossipInterval = 100 * time.Millisecond
+
+	// Tighten the Raft timing
+	config.RaftConfig.LeaderLeaseTimeout = 100 * time.Millisecond
+	config.RaftConfig.HeartbeatTimeout = 200 * time.Millisecond
+	config.RaftConfig.ElectionTimeout = 200 * time.Millisecond
+
+	config.Bootstrap = true
+	config.BootstrapExpect = 1
+	config.StartAsLeader = true
+
+	broker, err := nolan.NewBroker(config, tracer)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error starting broker: %v\n", err)
+		os.Exit(1)
+	}
+
+	srv := nolan.NewServer(config, broker, nil, tracer, closer.Close)
+	if err := srv.Start(context.Background()); err != nil {
+		fmt.Fprintf(os.Stderr, "error starting server: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("--------Broker and server located at....----------")
+	fmt.Println(config.Addr)
+	fmt.Println(srv.Addr().String())
+
+	_, err = nolan.Dial("tcp", srv.Addr().String())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error connecting to broker: %v\n", err)
+		os.Exit(1)
+	}
+
+	defer srv.Shutdown()
+
+	gracefully.Timeout = 10 * time.Second
+	gracefully.Shutdown()
+
+	if err := broker.Shutdown(); err != nil {
+		fmt.Fprintf(os.Stderr, "error shutting down store: %v\n", err)
+		os.Exit(1)
+	}
+
+	////////////////////////////////////////////////////
 }
 
 type memberlistConfigValue memberlist.Config

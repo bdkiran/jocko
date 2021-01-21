@@ -49,7 +49,9 @@ func main() {
 	config.Version = sarama.V0_10_0_1
 	config.Producer.Return.Successes = true
 
+	fmt.Println(s.Addr().String())
 	brokers := []string{s.Addr().String()}
+	fmt.Println(brokers)
 	producer, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
 		panic(err)
