@@ -10,6 +10,19 @@ $ cd $GOPATH/src/github.com/travisjeffery/jocko/cmd/jocko
 $ go build
 ```
 
+## Start a single node
+
+```bash
+$ nolan broker \
+          --data-dir="/tmp/nolan0" \
+          --broker-addr=127.0.0.1:9092 \
+          --raft-addr=127.0.0.1:9093 \
+          --serf-addr=127.0.0.1:9094 \
+          --bootstrap \
+          --bootstrap-expect=1 \
+          --id=1
+```
+
 ## Start the nodes
 
 ```bash

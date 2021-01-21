@@ -35,7 +35,7 @@ func main() {
 	pmap := make(map[int32][]check)
 
 	for i := 0; i < messageCount; i++ {
-		message := fmt.Sprintf("Hello from Jocko #%d!", i)
+		message := fmt.Sprintf("Hello from Nolan #%d!", i)
 		partition, offset, err := producer.SendMessage(&sarama.ProducerMessage{
 			Topic: topic,
 			Value: sarama.StringEncoder(message),

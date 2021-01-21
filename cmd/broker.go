@@ -102,9 +102,10 @@ func run(cmd *cobra.Command, args []string) {
 	}
 }
 
+//Used to create a broker similar to that in test...
 func createTestBroker(cmd *cobra.Command, args []string) {
 	fmt.Println("Starting test broker...")
-	//ports := dynaport.Get(4)
+
 	nodeID := atomic.AddInt32(&nodeNumber, 1)
 
 	cfg := jaegercfg.Configuration{
@@ -192,8 +193,6 @@ func createTestBroker(cmd *cobra.Command, args []string) {
 		fmt.Fprintf(os.Stderr, "error shutting down store: %v\n", err)
 		os.Exit(1)
 	}
-
-	////////////////////////////////////////////////////
 }
 
 type memberlistConfigValue memberlist.Config

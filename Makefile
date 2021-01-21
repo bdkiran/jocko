@@ -1,6 +1,6 @@
 #This needs to get rebuilt....
 #For now just build manually
-BUILD_PATH := /
+BUILD_PATH := /nolan
 DOCKER_TAG := latest
 
 all: test
@@ -12,7 +12,7 @@ vet:
 	@go list ./... | grep -v vendor | xargs go vet
 
 build: deps
-	@go build -o $(BUILD_PATH) cmd/jocko/main.go
+	@go build -o $(BUILD_PATH) main.go
 
 release:
 	@which goreleaser 2>/dev/null || go get -u github.com/goreleaser/goreleaser
@@ -34,3 +34,6 @@ test-race:
 	@go test -v -race -p=1 ./...
 
 .PHONY: test-race test build-docker clean release build deps vet all
+
+hi:
+	echo "hi"
