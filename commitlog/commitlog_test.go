@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/bdkiran/nolan/commitlog"
 	"github.com/stretchr/testify/require"
-	"github.com/travisjeffery/jocko/commitlog"
 )
 
 var (

@@ -20,21 +20,21 @@ This is a fork of the Jocko Repository.
 
 ### Local
 
-1. Clone Jocko
+1. Clone Nolan
 
     ```bash
-    $ go get github.com/travisjeffery/jocko
+    $ git clone github.com/bdkiran/nolan
     ```
 
-1. Build Jocko
+2. Build Nolan
 
     ```bash
-    $ cd $GOPATH/src/github.com/travisjeffery/jocko
-    $ make build
+    $ cd nolan
+    $ go build ./...
+    $ go install
     ```
 
-    (If you see an error about `dep` not being found, ensure that
-    `$GOPATH/bin` is in your `PATH`)
+3. Try running one of the examples
 
 ### Docker
 

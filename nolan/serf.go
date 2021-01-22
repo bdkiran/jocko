@@ -8,6 +8,7 @@ import (
 	"github.com/bdkiran/nolan/nolan/metadata"
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/serf/serf"
+	"go.uber.org/zap"
 )
 
 const (
@@ -73,7 +74,7 @@ func (b *Broker) lanNodeJoin(me serf.MemberEvent) {
 		if !ok {
 			continue
 		}
-		log.Info.Printf("broker/%d: adding LAN server: %s", b.config.ID, meta.ID)
+		zap.S().Infof("broker/%d: adding LAN server: %s", b.config.ID, meta.ID)
 		// update server lookup
 		b.brokerLookup.AddBroker(meta)
 		if b.config.BootstrapExpect != 0 {
@@ -88,7 +89,7 @@ func (b *Broker) lanNodeFailed(me serf.MemberEvent) {
 		if !ok {
 			continue
 		}
-		log.Info.Printf("broker/%d: removing LAN server: %s", b.config.ID, m.Name)
+		zap.S().Infof("broker/%d: removing LAN server: %s", b.config.ID, m.Name)
 		b.brokerLookup.RemoveBroker(meta)
 	}
 }
@@ -120,11 +121,11 @@ func (b *Broker) maybeBootstrap() {
 		index, err = b.raftStore.LastIndex()
 	}
 	if err != nil {
-		log.Error.Printf("broker/%d: read last raft index error: %s", b.config.ID, err)
+		zap.S().Errorf("broker/%d: read last raft index error: %s", b.config.ID, err)
 		return
 	}
 	if index != 0 {
-		log.Info.Printf("broker/%d: raft data found, disabling bootstrap mode: index: %d, path: %s", b.config.ID, index, filepath.Join(b.config.DataDir, raftState))
+		zap.S().Infof("broker/%d: raft data found, disabling bootstrap mode: index: %d, path: %s", b.config.ID, index, filepath.Join(b.config.DataDir, raftState))
 		b.config.BootstrapExpect = 0
 		return
 	}
@@ -137,18 +138,18 @@ func (b *Broker) maybeBootstrap() {
 			continue
 		}
 		if meta.Expect != 0 && meta.Expect != b.config.BootstrapExpect {
-			log.Error.Printf("broker/%d: members expects conflicting node count: %s", b.config.ID, member.Name)
+			zap.S().Errorf("broker/%d: members expects conflicting node count: %s", b.config.ID, member.Name)
 			return
 		}
 		if meta.Bootstrap {
-			log.Error.Printf("broker/%d; member %s has bootstrap mode. expect disabled", b.config.ID, member.Name)
+			zap.S().Errorf("broker/%d; member %s has bootstrap mode. expect disabled", b.config.ID, member.Name)
 			return
 		}
 		brokers = append(brokers, *meta)
 	}
 
 	if len(brokers) < b.config.BootstrapExpect {
-		log.Debug.Printf("broker/%d: maybe bootstrap: need more brokers: got: %d: expect: %d", b.config.ID, len(brokers), b.config.BootstrapExpect)
+		zap.S().Debugf("broker/%d: maybe bootstrap: need more brokers: got: %d: expect: %d", b.config.ID, len(brokers), b.config.BootstrapExpect)
 		return
 	}
 
@@ -164,10 +165,10 @@ func (b *Broker) maybeBootstrap() {
 		configuration.Servers = append(configuration.Servers, peer)
 	}
 
-	log.Info.Printf("broker/%d: found expected number of peers, attempting bootstrap: addrs: %v", b.config.ID, addrs)
+	zap.S().Infof("broker/%d: found expected number of peers, attempting bootstrap: addrs: %v", b.config.ID, addrs)
 	future := b.raft.BootstrapCluster(configuration)
 	if err := future.Error(); err != nil {
-		log.Error.Printf("broker/%d: bootstrap cluster error: %s", b.config.ID, err)
+		zap.S().Errorf("broker/%d: bootstrap cluster error: %s", b.config.ID, err)
 	}
 	b.config.BootstrapExpect = 0
 }

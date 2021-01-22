@@ -43,7 +43,7 @@ type Dialer struct {
 }
 
 var (
-	defaultDialer = NewDialer("jocko")
+	defaultDialer = NewDialer("nolan")
 )
 
 // NewDialer creates a new dialer.
