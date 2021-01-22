@@ -14,15 +14,6 @@ var (
 A distributed commit log built in go.
 No messy JVM or complex configurations.`,
 	}
-
-	// brokerCfg = config.DefaultConfig()
-
-	// topicCfg = struct {
-	// 	BrokerAddr        string
-	// 	Topic             string
-	// 	Partitions        int32
-	// 	ReplicationFactor int
-	// }{}
 )
 
 //Execute executes the cli command

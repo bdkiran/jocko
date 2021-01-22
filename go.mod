@@ -43,20 +43,14 @@ require (
 	github.com/opentracing/opentracing-go v1.0.2
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pierrec/lz4 v1.0.1
-	github.com/pierrec/xxHash v0.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v0.9.2
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
-	github.com/prometheus/common v0.0.0-20181126121408-4724e9255275
-	github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a
-	github.com/rcrowley/go-metrics v0.0.0-20161128210544-1f30fe9094a5
 	github.com/satori/go.uuid v1.2.0
-	github.com/sdboyer/constext v0.0.0-20170321163424-836a14457353 // indirect
-	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529
 	github.com/spf13/cobra v0.0.1
 	github.com/spf13/pflag v1.0.0
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	github.com/tj/go-gracefully v0.0.0-20141227061038-005c1d102f1b
 	github.com/travisjeffery/go-dynaport v0.0.0-20171203090423-24009f4f2f49
 	github.com/travisjeffery/jocko v0.0.0-20201227025536-9613083803fc
@@ -65,10 +59,9 @@ require (
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/ugorji/go v0.0.0-20180112141927-9831f2c3ac10
 	go.uber.org/atomic v1.7.0 // indirect
-	golang.org/x/net v0.0.0-20190311183353-d8887717615a
+	go.uber.org/zap v1.16.0
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a // indirect
 	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78
-	golang.org/x/tools v0.0.0-20190524140312-2c0ae7006135
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	upspin.io v0.0.0-20180517055408-63f1073c7a3a

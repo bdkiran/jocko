@@ -3,9 +3,9 @@ package nolan
 import (
 	"time"
 
-	"github.com/bdkiran/nolan/log"
 	"github.com/bdkiran/nolan/protocol"
 	"github.com/cenkalti/backoff"
+	"go.uber.org/zap"
 )
 
 // Client is used to request other brokers.
@@ -28,6 +28,7 @@ type Replicator struct {
 	backoff             *backoff.ExponentialBackOff
 }
 
+// ReplicatorConfig provides the configuration settings for the replicator
 type ReplicatorConfig struct {
 	MinBytes int32
 	// todo: make this a time.Duration
@@ -81,13 +82,13 @@ func (r *Replicator) fetchMessages() {
 			fetchResponse, err = r.leader.Fetch(fetchRequest)
 			// TODO: probably shouldn't panic. just let this replica fall out of ISR.
 			if err != nil {
-				log.Error.Printf("replicator: fetch messages error: %s", err)
+				zap.S().Errorf("replicator: fetch messages error: %s", err)
 				goto BACKOFF
 			}
 			for _, resp := range fetchResponse.Responses {
 				for _, p := range resp.PartitionResponses {
 					if p.ErrorCode != protocol.ErrNone.Code() {
-						log.Error.Printf("replicator: partition response error: %d", p.ErrorCode)
+						zap.S().Errorf("replicator: partition response error: %d", p.ErrorCode)
 						goto BACKOFF
 					}
 					if p.RecordSet == nil {

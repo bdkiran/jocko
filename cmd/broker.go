@@ -21,6 +21,7 @@ import (
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
+	"go.uber.org/zap"
 )
 
 var (
@@ -104,7 +105,7 @@ func run(cmd *cobra.Command, args []string) {
 
 //Used to create a broker similar to that in test...
 func createTestBroker(cmd *cobra.Command, args []string) {
-	fmt.Println("Starting test broker...")
+	zap.S().Infow("Starting the test broker..")
 
 	nodeID := atomic.AddInt32(&nodeNumber, 1)
 
@@ -130,7 +131,7 @@ func createTestBroker(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 
-	tmpDir, err := ioutil.TempDir("", fmt.Sprintf("jocko-test-server-%d", nodeID))
+	tmpDir, err := ioutil.TempDir("", fmt.Sprintf("nolan-test-server-%d", nodeID))
 	if err != nil {
 		panic(err)
 	}
@@ -174,9 +175,6 @@ func createTestBroker(cmd *cobra.Command, args []string) {
 		fmt.Fprintf(os.Stderr, "error starting server: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("--------Broker and server located at....----------")
-	fmt.Println(config.Addr)
-	fmt.Println(srv.Addr().String())
 
 	_, err = nolan.Dial("tcp", srv.Addr().String())
 	if err != nil {

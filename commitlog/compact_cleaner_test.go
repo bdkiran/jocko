@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bdkiran/nolan/commitlog"
+	"github.com/bdkiran/nolan/protocol"
 	"github.com/stretchr/testify/require"
-	"github.com/travisjeffery/jocko/commitlog"
-	"github.com/travisjeffery/jocko/protocol"
 )
 
 func TestCompactCleaner(t *testing.T) {

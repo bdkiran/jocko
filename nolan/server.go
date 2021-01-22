@@ -8,11 +8,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/bdkiran/nolan/log"
 	"github.com/bdkiran/nolan/nolan/config"
 	"github.com/bdkiran/nolan/protocol"
 	"github.com/davecgh/go-spew/spew"
 	opentracing "github.com/opentracing/opentracing-go"
+	"go.uber.org/zap"
 )
 
 type contextKey string
@@ -32,7 +32,7 @@ func init() {
 	}
 }
 
-// Broker is the interface that wraps the Broker's methods.
+// Handler is the interface that wraps the Broker's methods.
 type Handler interface {
 	Run(context.Context, <-chan *Context, chan<- *Context)
 	Leave() error
@@ -55,6 +55,7 @@ type Server struct {
 	close        func() error
 }
 
+//NewServer creates and returns a new sever struct
 func NewServer(config *config.Config, handler Handler, metrics *Metrics, tracer opentracing.Tracer, close func() error) *Server {
 	s := &Server{
 		config:     config,
@@ -71,14 +72,17 @@ func NewServer(config *config.Config, handler Handler, metrics *Metrics, tracer 
 
 // Start starts the service.
 func (s *Server) Start(ctx context.Context) error {
+	//Resolve the tcp address from the server configuration
 	protocolAddr, err := net.ResolveTCPAddr("tcp", s.config.Addr)
 	if err != nil {
 		return err
 	}
+	//Start listening on that tcp address
 	if s.protocolLn, err = net.ListenTCP("tcp", protocolAddr); err != nil {
 		return err
 	}
 
+	//This go routine accepts connections and handles requests to the server
 	go func() {
 		for {
 			select {
@@ -89,7 +93,7 @@ func (s *Server) Start(ctx context.Context) error {
 			default:
 				conn, err := s.protocolLn.Accept()
 				if err != nil {
-					log.Error.Printf("server/%d: listener accept error: %s", s.config.ID, err)
+					zap.S().Errorf("server/%d: listener accept error: %s", s.config.ID, err)
 					continue
 				}
 
@@ -98,6 +102,7 @@ func (s *Server) Start(ctx context.Context) error {
 		}
 	}()
 
+	//This go routine handles responses that the server sends out
 	go func() {
 		for {
 			select {
@@ -110,18 +115,19 @@ func (s *Server) Start(ctx context.Context) error {
 					queueSpan.Finish()
 				}
 				if err := s.handleResponse(respCtx); err != nil {
-					log.Error.Printf("server/%d: handle response error: %s", s.config.ID, err)
+					zap.S().Errorf("server/%d: listener accept error: %s", s.config.ID, err)
 				}
 			}
 		}
 	}()
-
-	log.Debug.Printf("server/%d: run handler", s.config.ID)
+	zap.S().Debugf("server/%d: run handler", s.config.ID)
+	//Runs the broker...
 	go s.handler.Run(ctx, s.requestCh, s.responseCh)
 
 	return nil
 }
 
+//Leave server leaves the cluser?
 func (s *Server) Leave() error {
 	return s.handler.Leave()
 }
@@ -160,7 +166,7 @@ func (s *Server) handleRequest(conn net.Conn) {
 			break
 		}
 		if err != nil {
-			log.Error.Printf("conn read error: %s", err)
+			zap.S().Errorf("conn read error: %s", err)
 			break
 		}
 
@@ -179,7 +185,8 @@ func (s *Server) handleRequest(conn net.Conn) {
 			// TODO: handle request
 			span.LogKV("msg", "failed to read from connection", "err", err)
 			span.Finish()
-			panic(err)
+			zap.S().Panic(err)
+			//panic(err)
 		}
 
 		d := protocol.NewDecoder(b)
@@ -188,7 +195,7 @@ func (s *Server) handleRequest(conn net.Conn) {
 			// TODO: handle err
 			span.LogKV("msg", "failed to decode header", "err", err)
 			span.Finish()
-			panic(err)
+			zap.S().Panic(err)
 		}
 
 		span.SetTag("api_key", header.APIKey)
@@ -246,10 +253,10 @@ func (s *Server) handleRequest(conn net.Conn) {
 		}
 
 		if err := req.Decode(d, header.APIVersion); err != nil {
-			log.Error.Printf("server/%d: %s: decode request failed: %s", s.config.ID, header, err)
+			zap.S().Errorf("server/%d: %s: decode request failed: %s", s.config.ID, header, err)
 			span.LogKV("msg", "failed to decode request", "err", err)
 			span.Finish()
-			panic(err)
+			zap.S().Panic(err)
 		}
 
 		decodeSpan.Finish()
@@ -264,8 +271,7 @@ func (s *Server) handleRequest(conn net.Conn) {
 			req:    req,
 			conn:   conn,
 		}
-
-		log.Debug.Printf("server/%d: handle request: %s", s.config.ID, reqCtx)
+		zap.S().Debugf("server/%d: handle request: %s", s.config.ID, reqCtx)
 
 		s.requestCh <- reqCtx
 	}
@@ -274,8 +280,7 @@ func (s *Server) handleRequest(conn net.Conn) {
 func (s *Server) handleResponse(respCtx *Context) error {
 	psp := opentracing.SpanFromContext(respCtx)
 	sp := s.tracer.StartSpan("server: handle response", opentracing.ChildOf(psp.Context()))
-
-	log.Debug.Printf("server/%d: handle response: %s", s.config.ID, respCtx)
+	zap.S().Debugf("server/%d: handle response: %s", s.config.ID, respCtx)
 
 	defer psp.Finish()
 	defer sp.Finish()
@@ -293,6 +298,7 @@ func (s *Server) Addr() net.Addr {
 	return s.protocolLn.Addr()
 }
 
+//ID returns the server config ID
 func (s *Server) ID() int32 {
 	return s.config.ID
 }

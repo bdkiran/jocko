@@ -15,13 +15,13 @@ import (
 	"time"
 
 	"github.com/bdkiran/nolan/commitlog"
-	"github.com/bdkiran/nolan/log"
 	"github.com/bdkiran/nolan/nolan/config"
 	"github.com/bdkiran/nolan/nolan/fsm"
 	"github.com/bdkiran/nolan/nolan/metadata"
 	"github.com/bdkiran/nolan/nolan/structs"
 	"github.com/bdkiran/nolan/nolan/util"
 	"github.com/bdkiran/nolan/protocol"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
@@ -29,11 +29,11 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
 )
 
 var (
-	brokerVerboseLogs bool
-
+	brokerVerboseLogs         bool
 	ErrTopicExists            = errors.New("topic exists already")
 	ErrInvalidArgument        = errors.New("no logger set")
 	OffsetsTopicName          = "__consumer_offsets"
@@ -48,6 +48,8 @@ const (
 )
 
 func init() {
+	//What is this used for??
+	//Does this do anything?
 	spew.Config.Indent = ""
 
 	e := os.Getenv("JOCKODEBUG")
@@ -56,7 +58,7 @@ func init() {
 	}
 }
 
-// Broker represents a broker in a Jocko cluster, like a broker in a Kafka cluster.
+// Broker represents a broker in a nolan cluster, like a broker in a Kafka cluster.
 type Broker struct {
 	sync.RWMutex
 	config *config.Config
@@ -89,7 +91,7 @@ type Broker struct {
 	shutdownLock sync.Mutex
 }
 
-// New is used to instantiate a new broker.
+//NewBroker instanciates a new broker
 func NewBroker(config *config.Config, tracer opentracing.Tracer) (*Broker, error) {
 	b := &Broker{
 		config:           config,
@@ -99,7 +101,7 @@ func NewBroker(config *config.Config, tracer opentracing.Tracer) (*Broker, error
 		replicaLookup:    NewReplicaLookup(),
 		reconcileCh:      make(chan serf.Member, 32),
 		tracer:           tracer,
-		logStateInterval: time.Millisecond * 250,
+		logStateInterval: time.Second * 10,
 	}
 
 	if err := b.setupRaft(); err != nil {
@@ -117,6 +119,7 @@ func NewBroker(config *config.Config, tracer opentracing.Tracer) (*Broker, error
 
 	go b.monitorLeadership()
 
+	//This is what causes the very verbose logging that happens when a broker is started
 	go b.logState()
 
 	return b, nil
@@ -129,7 +132,8 @@ func (b *Broker) Run(ctx context.Context, requests <-chan *Context, responses ch
 	for {
 		select {
 		case reqCtx := <-requests:
-			log.Debug.Printf("broker/%d: request: %v", b.config.ID, reqCtx)
+
+			zap.S().Debugf("broker/%d: request: %v", b.config.ID, reqCtx)
 
 			if reqCtx == nil {
 				goto DONE
@@ -205,11 +209,11 @@ func (b *Broker) Run(ctx context.Context, requests <-chan *Context, responses ch
 		}
 	}
 DONE:
-	log.Debug.Printf("broker/%d: run done", b.config.ID)
+	zap.S().Debugf("broker/%d: run done", b.config.ID)
 	return
 }
 
-// Join is used to have the broker join the gossip ring.
+// JoinLAN is used to have the broker join the gossip ring.
 // The given address should be another broker listening on the Serf address.
 func (b *Broker) JoinLAN(addrs ...string) protocol.Error {
 	if _, err := b.serf.Join(addrs, true); err != nil {
@@ -411,9 +415,9 @@ func (b *Broker) handleProduce(ctx *Context, req *protocol.ProduceRequest) *prot
 	res := new(protocol.ProduceResponse)
 	res.APIVersion = req.Version()
 	res.Responses = make([]*protocol.ProduceTopicResponse, len(req.TopicData))
-	log.Debug.Printf("broker/%d: produce: %#v", b.config.ID, req)
+	zap.S().Debugf("broker/%d: produce: %#v", b.config.ID, req)
 	for i, td := range req.TopicData {
-		log.Debug.Printf("broker/%d: produce to partition: %d: %v", b.config.ID, i, td)
+		zap.S().Debugf("broker/%d: produce to partition: %d: %v", b.config.ID, i, td)
 		tres := make([]*protocol.ProducePartitionResponse, len(td.Data))
 		for j, p := range td.Data {
 			pres := &protocol.ProducePartitionResponse{}
@@ -422,22 +426,22 @@ func (b *Broker) handleProduce(ctx *Context, req *protocol.ProduceRequest) *prot
 				state := b.fsm.State()
 				_, t, err := state.GetTopic(td.Topic)
 				if err != nil {
-					log.Error.Printf("broker/%d: produce to partition error: get topic: %s", b.config.ID, err)
+					zap.S().Errorf("broker/%d: produce to partition error: get topic: %s", b.config.ID, err)
 					return protocol.ErrUnknown.WithErr(err)
 				}
 				if t == nil {
-					log.Error.Printf("broker/%d: produce to partition error: unknown topic", b.config.ID)
+					zap.S().Errorf("broker/%d: produce to partition error: unknown topic", b.config.ID)
 					return protocol.ErrUnknownTopicOrPartition
 				}
 				replica, err := b.replicaLookup.Replica(td.Topic, p.Partition)
 				if err != nil || replica == nil || replica.Log == nil {
-					log.Error.Printf("broker/%d: produce to partition error: %s", b.config.ID, err)
+					zap.S().Errorf("broker/%d: produce to partition error: %s", b.config.ID, err)
 					pres.Partition = p.Partition
 					return protocol.ErrReplicaNotAvailable
 				}
 				offset, appendErr := replica.Log.Append(p.RecordSet)
 				if appendErr != nil {
-					log.Error.Printf("broker/%d: log append error: %s", b.config.ID, err)
+					zap.S().Errorf("broker/%d: log append error: %s", b.config.ID, err)
 					return protocol.ErrUnknown
 				}
 				pres.BaseOffset = offset
@@ -597,7 +601,7 @@ ERROR:
 	if res.ErrorCode == 0 {
 		res.ErrorCode = protocol.ErrUnknown.Code()
 	}
-	log.Error.Printf("broker/%d: broker: %v: coordinator error: %s", b.config.ID, broker, err)
+	zap.S().Errorf("broker/%d: broker: %v: coordinator error: %s", b.config.ID, broker, err)
 
 	return res
 }
@@ -614,7 +618,7 @@ func (b *Broker) handleJoinGroup(ctx *Context, r *protocol.JoinGroupRequest) *pr
 
 	_, group, err := state.GetGroup(r.GroupID)
 	if err != nil {
-		log.Error.Printf("broker/%d: get group error: %s", b.config.ID, err)
+		zap.S().Errorf("broker/%d: get group error: %s", b.config.ID, err)
 		res.ErrorCode = protocol.ErrUnknown.Code()
 		return res
 	}
@@ -641,7 +645,7 @@ func (b *Broker) handleJoinGroup(ctx *Context, r *protocol.JoinGroupRequest) *pr
 		Group: *group,
 	})
 	if err != nil {
-		log.Error.Printf("broker/%d: register group error: %s", b.config.ID, err)
+		zap.S().Errorf("broker/%d: register group error: %s", b.config.ID, err)
 		res.ErrorCode = protocol.ErrUnknown.Code()
 		return res
 	}
@@ -835,7 +839,7 @@ func (b *Broker) handleFetch(ctx *Context, r *protocol.FetchRequest) *protocol.F
 				}
 				rdr, rdrErr := replica.Log.NewReader(p.FetchOffset, p.MaxBytes)
 				if rdrErr != nil {
-					log.Error.Printf("broker/%d: replica log read error: %s", b.config.ID, rdrErr)
+					zap.S().Errorf("broker/%d: replica log read error: %s", b.config.ID, rdrErr)
 					return protocol.ErrUnknown.WithErr(rdrErr)
 				}
 				buf := new(bytes.Buffer)
@@ -844,7 +848,7 @@ func (b *Broker) handleFetch(ctx *Context, r *protocol.FetchRequest) *protocol.F
 					// TODO: copy these bytes to outer bytes
 					nn, err := io.Copy(buf, rdr)
 					if err != nil && err != io.EOF {
-						log.Error.Printf("broker/%d: reader copy error", b.config.ID, err)
+						zap.S().Errorf("broker/%d: reader copy error", b.config.ID, err)
 						return protocol.ErrUnknown.WithErr(rdrErr)
 					}
 					n += int32(nn)
@@ -866,7 +870,7 @@ func (b *Broker) handleFetch(ctx *Context, r *protocol.FetchRequest) *protocol.F
 }
 
 func (b *Broker) handleSaslHandshake(ctx *Context, req *protocol.SaslHandshakeRequest) *protocol.SaslHandshakeResponse {
-	panic("not implemented: sasl handshake")
+	zap.S().Panic("not implemented: sasl handshake")
 	return nil
 }
 
@@ -877,9 +881,8 @@ func (b *Broker) handleListGroups(ctx *Context, req *protocol.ListGroupsRequest)
 	res.APIVersion = req.Version()
 	state := b.fsm.State()
 
-	fmt.Println("list")
-	fmt.Println("list")
-	fmt.Println("list")
+	//Not sure why this was here...
+	zap.S().Debugw("Handling list group")
 
 	_, groups, err := state.GetGroups()
 	if err != nil {
@@ -903,9 +906,7 @@ func (b *Broker) handleDescribeGroups(ctx *Context, req *protocol.DescribeGroups
 	res.APIVersion = req.Version()
 	state := b.fsm.State()
 
-	fmt.Println("describe")
-	fmt.Println("describe")
-	fmt.Println("describe")
+	zap.S().Debugw("describing list group")
 
 	for _, id := range req.GroupIDs {
 		group := protocol.Group{}
@@ -937,22 +938,22 @@ func (b *Broker) handleDescribeGroups(ctx *Context, req *protocol.DescribeGroups
 }
 
 func (b *Broker) handleStopReplica(ctx *Context, req *protocol.StopReplicaRequest) *protocol.StopReplicaResponse {
-	panic("not implemented: stop replica")
+	zap.S().Panic("not implemented: sasl handshake")
 	return nil
 }
 
 func (b *Broker) handleUpdateMetadata(ctx *Context, req *protocol.UpdateMetadataRequest) *protocol.UpdateMetadataResponse {
-	panic("not implemented: update metadata")
+	zap.S().Panic("not implemented: update metadata")
 	return nil
 }
 
 func (b *Broker) handleControlledShutdown(ctx *Context, req *protocol.ControlledShutdownRequest) *protocol.ControlledShutdownResponse {
-	panic("not implemented: controlled shutdown")
+	zap.S().Panic("not implemented: controlled shutdown")
 	return nil
 }
 
 func (b *Broker) handleOffsetCommit(ctx *Context, req *protocol.OffsetCommitRequest) *protocol.OffsetCommitResponse {
-	panic("not implemented: offset commit")
+	zap.S().Panic("not implemented: offset commit")
 	return nil
 }
 
@@ -1006,7 +1007,7 @@ func (b *Broker) startReplica(replica *Replica) protocol.Error {
 	// TODO: think i need to just ensure/add the topic if it's not here yet
 
 	if topic == nil {
-		log.Info.Printf("broker/%d: start replica called on unknown topic: %s", b.config.ID, replica.Partition.Topic)
+		zap.S().Infof("broker/%d: start replica called on unknown topic: %s", b.config.ID, replica.Partition.Topic)
 		return protocol.ErrUnknownTopicOrPartition
 	}
 
@@ -1135,11 +1136,11 @@ func (b *Broker) buildPartitions(topic string, partitionsCount int32, replicatio
 
 // Leave is used to prepare for a graceful shutdown.
 func (b *Broker) Leave() error {
-	log.Info.Printf("broker/%d: starting leave", b.config.ID)
+	zap.S().Infof("broker/%d: starting leave", b.config.ID)
 
 	numPeers, err := b.numPeers()
 	if err != nil {
-		log.Error.Printf("broker/%d: check raft peers error: %s", b.config.ID, err)
+		zap.S().Errorf("broker/%d: check raft peers error: %s", b.config.ID, err)
 		return err
 	}
 
@@ -1147,13 +1148,13 @@ func (b *Broker) Leave() error {
 	if isLeader && numPeers > 1 {
 		future := b.raft.RemoveServer(raft.ServerID(fmt.Sprintf("%d", b.config.ID)), 0, 0)
 		if err := future.Error(); err != nil {
-			log.Error.Printf("broker/%d: remove ourself as raft peer error: %s", b.config.ID, err)
+			zap.S().Errorf("broker/%d: remove ourself as raft peer error: %s", b.config.ID, err)
 		}
 	}
 
 	if b.serf != nil {
 		if err := b.serf.Leave(); err != nil {
-			log.Error.Printf("broker/%d: leave LAN serf cluster error: %s", b.config.ID, err)
+			zap.S().Errorf("broker/%d: leave LAN serf cluster error: %s", b.config.ID, err)
 		}
 	}
 
@@ -1169,7 +1170,7 @@ func (b *Broker) Leave() error {
 			// Get the latest configuration.
 			future := b.raft.GetConfiguration()
 			if err := future.Error(); err != nil {
-				log.Error.Printf("broker/%d: get raft configuration error: %s", b.config.ID, err)
+				zap.S().Errorf("broker/%d: get raft configuration error: %s", b.config.ID, err)
 				break
 			}
 
@@ -1189,7 +1190,7 @@ func (b *Broker) Leave() error {
 
 // Shutdown is used to shutdown the broker, its serf, its raft, and so on.
 func (b *Broker) Shutdown() error {
-	log.Info.Printf("broker/%d: shutting down broker", b.config.ID)
+	zap.S().Infof("broker/%d: shutting down broker", b.config.ID)
 	b.shutdownLock.Lock()
 	defer b.shutdownLock.Unlock()
 
@@ -1207,7 +1208,7 @@ func (b *Broker) Shutdown() error {
 		b.raftTransport.Close()
 		future := b.raft.Shutdown()
 		if err := future.Error(); err != nil {
-			log.Error.Printf("broker/%d: shutdown error: %s", b.config.ID, err)
+			zap.S().Errorf("broker/%d: shutdown error: %s", b.config.ID, err)
 		}
 		if b.raftStore != nil {
 			b.raftStore.Close()
@@ -1311,11 +1312,12 @@ func (b *Broker) numPeers() (int, error) {
 	return numPeers, nil
 }
 
+//LANMembers returns all of the serf members
 func (b *Broker) LANMembers() []serf.Member {
 	return b.serf.Members()
 }
 
-// Replica
+// Replica is the structure that represents a replica
 type Replica struct {
 	BrokerID   int32
 	Partition  structs.Partition
@@ -1426,7 +1428,7 @@ func (b *Broker) logState() {
 			for i, topic := range topics {
 				buf.WriteString(fmt.Sprintf("\t\t- %d:\n\t\t\tid: %s\n\t\t\tpartitions: %v\n", i, topic.Topic, topic.Partitions))
 			}
-			log.Info.Printf("broker/%d: state:\n%s", b.config.ID, buf.String())
+			zap.S().Debugf("broker/%d: state:\n%s", b.config.ID, buf.String())
 		}
 	}
 }
