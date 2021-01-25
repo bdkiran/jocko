@@ -23,9 +23,11 @@ import (
 	"github.com/bdkiran/nolan/nolan/config"
 	"github.com/bdkiran/nolan/nolan/structs"
 	"github.com/bdkiran/nolan/protocol"
+	"go.uber.org/zap"
 )
 
 func TestBroker_Run(t *testing.T) {
+	zap.S().Infow("Setting up test broker and running tests....")
 	log.SetPrefix("broker_test: ")
 
 	// creating the config up here so we can set the nodeid in the expected test cases
@@ -701,7 +703,7 @@ type fields struct {
 
 func newFields() fields {
 	return fields{
-		logDir: "/tmp/jocko/logs",
+		logDir: "/tmp/nolan/logs",
 		id:     1,
 	}
 }

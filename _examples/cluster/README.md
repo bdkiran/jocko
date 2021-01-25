@@ -32,7 +32,7 @@ $ nolan broker \
           --raft-addr=127.0.0.1:9002 \
           --serf-addr=127.0.0.1:9003 \
           --bootstrap \
-          --bootstrap-expect=3 \
+          --bootstrap-expect=2 \
           --id=1
 
 $ nolan broker \
@@ -41,12 +41,13 @@ $ nolan broker \
           --raft-addr=127.0.0.1:9102 \
           --serf-addr=127.0.0.1:9103 \
           --join=127.0.0.1:9003 \
-          --bootstrap-expect=3 \
+          --join-wan=127.0.0.1:9003 \
+          --bootstrap-expect=2 \
           --id=2
 
 $ nolan broker \
           --data-dir="/tmp/nolan2" \
-          --broker-addr=127.0.0.1:9201 \
+          --broker-addr=127.0.0.1:920 \
           --raft-addr=127.0.0.1:9202 \
           --serf-addr=127.0.0.1:9203 \
           --join=127.0.0.1:9003 \

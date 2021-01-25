@@ -56,7 +56,9 @@ func (b Broker) String() string {
 
 // IsBroker checks if the given serf.Member is a broker, building and returning Broker instance from the Member's tags if so.
 func IsBroker(m serf.Member) (*Broker, bool) {
-	if m.Tags["role"] != "jocko" {
+	//What is this property??
+	//Where is it assigned??
+	if m.Tags["role"] != "nolan" {
 		return nil, false
 	}
 

@@ -9,10 +9,9 @@ This is a fork of the Jocko Repository.
 ## Gaols of the Project
 
 - Implement Kafka in Go
-- Protocol compatible with Kafka so Kafka clients and services work with Jocko
+- Protocol compatible with Kafka so Kafka clients and services work with Noloan
 - Make operating simpler
 - Distribute a single binary
-- Use Serf for discovery, Raft for consensus (and remove the need to run ZooKeeper)
 - Simpler configuration settings
   - Get a cluster or single broker up and running quickly
 
@@ -35,10 +34,6 @@ This is a fork of the Jocko Repository.
     ```
 
 3. Try running one of the examples
-
-### Docker
-
-`docker build -t travisjeffery/jocko:latest .`
 
 ## Contributing
 

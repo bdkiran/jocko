@@ -137,7 +137,7 @@ func (b *Broker) monitorLeadership() {
 					defer leaderLoop.Done()
 					b.leaderLoop(ch)
 				}(weAreLeaderCh)
-				zap.S().Errorf("leader/%d: cluster leadership acquired", b.config.ID)
+				zap.S().Infof("leader/%d: cluster leadership acquired", b.config.ID)
 
 			default:
 				if weAreLeaderCh == nil {
@@ -245,7 +245,7 @@ func (b *Broker) reconcileReaped(known map[int32]struct{}) error {
 		member := serf.Member{
 			Tags: map[string]string{
 				"id":   fmt.Sprintf("%d", node.Node),
-				"role": "jocko",
+				"role": "nolan",
 			},
 		}
 		if err := b.handleReapMember(member); err != nil {
@@ -274,12 +274,14 @@ func (b *Broker) reconcileMember(m serf.Member) error {
 }
 
 func (b *Broker) handleAliveMember(m serf.Member) error {
+	// TODO: what happens when ok is false??
 	meta, ok := metadata.IsBroker(m)
 	if ok {
 		if err := b.joinCluster(m, meta); err != nil {
 			return err
 		}
 	}
+	zap.S().Debug(meta)
 	state := b.fsm.State()
 	_, node, err := state.GetNode(meta.ID.Int32())
 	if err != nil {
@@ -461,7 +463,7 @@ func (b *Broker) handleFailedMember(m serf.Member) error {
 
 	_, partitions, err := state.GetPartitions()
 	if err != nil {
-		panic(err)
+		zap.S().Panic(err)
 	}
 
 	// need to reassign partitions

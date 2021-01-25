@@ -16,13 +16,16 @@ import (
 
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
+	"go.uber.org/zap"
 )
 
 var (
 	nodeNumber int32
 )
 
+//NewTestServer is used to kick off a new broker and server for testing purposes
 func NewTestServer(t testing.T, cbBroker func(cfg *config.Config), cbServer func(cfg *config.Config)) (*Server, string) {
+	zap.S().Debugw("Starting the test server....")
 	ports := dynaport.Get(4)
 	nodeID := atomic.AddInt32(&nodeNumber, 1)
 
@@ -40,7 +43,7 @@ func NewTestServer(t testing.T, cbBroker func(cfg *config.Config), cbServer func
 	jMetricsFactory := metrics.NullFactory
 
 	tracer, closer, err := cfg.New(
-		"jocko",
+		"nolan",
 		// jaegercfg.Logger(jLogger),
 		jaegercfg.Metrics(jMetricsFactory),
 	)
@@ -48,7 +51,7 @@ func NewTestServer(t testing.T, cbBroker func(cfg *config.Config), cbServer func
 		panic(err)
 	}
 
-	tmpDir, err := ioutil.TempDir("", fmt.Sprintf("jocko-test-server-%d", nodeID))
+	tmpDir, err := ioutil.TempDir("", fmt.Sprintf("nolan-test-server-%d", nodeID))
 	if err != nil {
 		panic(err)
 	}
