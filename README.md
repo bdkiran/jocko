@@ -14,7 +14,7 @@ This is a fork of the Jocko Repository.
 
 *nolan* follows design patterns very similar to Kafka. Without a zookeeper dependency, nolan utilizes [raft](https://raft.github.io/) to achieve its distributed and scalable goals.
 
-## Gaols of the Project
+## Goals of the Project
 
 - Implement Kafka in Go
 - Protocol compatible with Kafka so Kafka clients and services work with Noloan
