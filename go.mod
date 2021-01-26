@@ -45,8 +45,6 @@ require (
 	github.com/pierrec/lz4 v1.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
-	github.com/prometheus/client_golang v0.9.2
-	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v0.0.1
 	github.com/spf13/pflag v1.0.0

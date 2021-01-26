@@ -2,9 +2,15 @@
 
 ![ci](https://github.com/bdkiran/nolan/workflows/Go/badge.svg)
 
-A distributed commit log/write ahead log service written in in Go.
+*nolan* is a lightweight distributed a commit log service. Create clusters trivally: straightforward and not a ton of configuation needed. Avalible to run as a standalone binary or in containers.
 
 This is a fork of the Jocko Repository.
+
+## Why?
+*nolan* is intended to reduce overhead that comes with setting up a distributed commit log or queue. Weather it's used for website activity tracking or application log aggregation, this tool should be able to provide stable groundwork for many use cases. 
+
+## How?
+*nolan* follows design patterns very similar to Kafka. Without a zookeeper dependency, nolan utilizes [raft](https://raft.github.io/) to achieve its distributed and scalable goals. 
 
 ## Gaols of the Project
 

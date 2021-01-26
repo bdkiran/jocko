@@ -48,19 +48,19 @@ type Server struct {
 	shutdown     bool
 	shutdownCh   chan struct{}
 	shutdownLock sync.Mutex
-	metrics      *Metrics
-	requestCh    chan *Context
-	responseCh   chan *Context
-	tracer       opentracing.Tracer
-	close        func() error
+	//metrics      *Metrics
+	requestCh  chan *Context
+	responseCh chan *Context
+	tracer     opentracing.Tracer
+	close      func() error
 }
 
 //NewServer creates and returns a new sever struct
-func NewServer(config *config.Config, handler Handler, metrics *Metrics, tracer opentracing.Tracer, close func() error) *Server {
+func NewServer(config *config.Config, handler Handler, tracer opentracing.Tracer, close func() error) *Server {
 	s := &Server{
-		config:     config,
-		handler:    handler,
-		metrics:    metrics,
+		config:  config,
+		handler: handler,
+		//metrics:    metrics,
 		shutdownCh: make(chan struct{}),
 		requestCh:  make(chan *Context, 1024),
 		responseCh: make(chan *Context, 1024),

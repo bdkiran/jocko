@@ -93,7 +93,7 @@ func NewTestServer(t testing.T, cbBroker func(cfg *config.Config), cbServer func
 		cbServer(config)
 	}
 
-	return NewServer(config, b, nil, tracer, closer.Close), tmpDir
+	return NewServer(config, b, tracer, closer.Close), tmpDir
 }
 
 func TestJoin(t testing.T, s1 *Server, other ...*Server) {

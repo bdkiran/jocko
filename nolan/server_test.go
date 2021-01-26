@@ -9,7 +9,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/bdkiran/nolan/log"
-	jocko "github.com/bdkiran/nolan/nolan"
+	"github.com/bdkiran/nolan/nolan"
 	"github.com/bdkiran/nolan/nolan/config"
 	"github.com/bdkiran/nolan/protocol"
 	cluster "github.com/bsm/sarama-cluster"
@@ -31,7 +31,7 @@ func TestProduceConsume(t *testing.T) {
 
 	sarama.Logger = log.NewStdLogger(log.New(log.DebugLevel, "server_test: sarama: "))
 
-	s1, dir1 := jocko.NewTestServer(t, func(cfg *config.Config) {
+	s1, dir1 := nolan.NewTestServer(t, func(cfg *config.Config) {
 		cfg.Bootstrap = true
 	}, nil)
 	ctx1, cancel1 := context.WithCancel((context.Background()))
@@ -42,9 +42,9 @@ func TestProduceConsume(t *testing.T) {
 	// TODO: mv close into teardown
 	defer s1.Shutdown()
 
-	jocko.WaitForLeader(t, s1)
+	nolan.WaitForLeader(t, s1)
 
-	s2, dir2 := jocko.NewTestServer(t, func(cfg *config.Config) {
+	s2, dir2 := nolan.NewTestServer(t, func(cfg *config.Config) {
 		cfg.Bootstrap = false
 	}, nil)
 	ctx2, cancel2 := context.WithCancel((context.Background()))
@@ -54,7 +54,7 @@ func TestProduceConsume(t *testing.T) {
 	defer os.RemoveAll(dir2)
 	defer s2.Shutdown()
 
-	s3, dir3 := jocko.NewTestServer(t, func(cfg *config.Config) {
+	s3, dir3 := nolan.NewTestServer(t, func(cfg *config.Config) {
 		cfg.Bootstrap = false
 	}, nil)
 	ctx3, cancel3 := context.WithCancel((context.Background()))
@@ -64,8 +64,8 @@ func TestProduceConsume(t *testing.T) {
 	defer os.RemoveAll(dir3)
 	defer s3.Shutdown()
 
-	jocko.TestJoin(t, s1, s2, s3)
-	controller, others := jocko.WaitForLeader(t, s1, s2, s3)
+	nolan.TestJoin(t, s1, s2, s3)
+	controller, others := nolan.WaitForLeader(t, s1, s2, s3)
 
 	err = createTopic(t, controller, others...)
 	require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestProduceConsume(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	bValue := []byte("Hello from Jocko!")
+	bValue := []byte("Hello from nolan!")
 	msgValue := sarama.ByteEncoder(bValue)
 	pPartition, offset, err := producer.SendMessage(&sarama.ProducerMessage{
 		Topic: topic,
@@ -137,7 +137,7 @@ func TestProduceConsume(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	controller, others = jocko.WaitForLeader(t, others...)
+	controller, others = nolan.WaitForLeader(t, others...)
 
 	time.Sleep(time.Second)
 
@@ -175,7 +175,7 @@ func TestProduceConsume(t *testing.T) {
 func TestConsumerGroup(t *testing.T) {
 	t.Skip()
 
-	s1, dir1 := jocko.NewTestServer(t, func(cfg *config.Config) {
+	s1, dir1 := nolan.NewTestServer(t, func(cfg *config.Config) {
 		cfg.Bootstrap = true
 	}, nil)
 	ctx1, cancel1 := context.WithCancel((context.Background()))
@@ -186,9 +186,9 @@ func TestConsumerGroup(t *testing.T) {
 	// TODO: mv close into dir
 	defer s1.Shutdown()
 
-	jocko.WaitForLeader(t, s1)
+	nolan.WaitForLeader(t, s1)
 
-	s2, dir2 := jocko.NewTestServer(t, func(cfg *config.Config) {
+	s2, dir2 := nolan.NewTestServer(t, func(cfg *config.Config) {
 		cfg.Bootstrap = false
 	}, nil)
 	ctx2, cancel2 := context.WithCancel((context.Background()))
@@ -198,7 +198,7 @@ func TestConsumerGroup(t *testing.T) {
 	defer os.RemoveAll(dir2)
 	defer s2.Shutdown()
 
-	s3, dir3 := jocko.NewTestServer(t, func(cfg *config.Config) {
+	s3, dir3 := nolan.NewTestServer(t, func(cfg *config.Config) {
 		cfg.Bootstrap = false
 	}, nil)
 	ctx3, cancel3 := context.WithCancel((context.Background()))
@@ -208,8 +208,8 @@ func TestConsumerGroup(t *testing.T) {
 	defer os.RemoveAll(dir3)
 	defer s3.Shutdown()
 
-	jocko.TestJoin(t, s1, s2, s3)
-	controller, others := jocko.WaitForLeader(t, s1, s2, s3)
+	nolan.TestJoin(t, s1, s2, s3)
+	controller, others := nolan.WaitForLeader(t, s1, s2, s3)
 
 	err = createTopic(t, controller, others...)
 	require.NoError(t, err)
@@ -244,7 +244,7 @@ func TestConsumerGroup(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	bValue := []byte("Hello from Jocko!")
+	bValue := []byte("Hello from nolan!")
 	msgValue := sarama.ByteEncoder(bValue)
 	pPartition, offset, err := producer.SendMessage(&sarama.ProducerMessage{
 		Topic: topic,
@@ -278,7 +278,7 @@ func TestConsumerGroup(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	controller, others = jocko.WaitForLeader(t, others...)
+	controller, others = nolan.WaitForLeader(t, others...)
 
 	time.Sleep(time.Second)
 
@@ -322,7 +322,7 @@ func TestConsumerGroup(t *testing.T) {
 func BenchmarkServer(b *testing.B) {
 	ctx, cancel := context.WithCancel((context.Background()))
 	defer cancel()
-	srv, dir := jocko.NewTestServer(b, func(cfg *config.Config) {
+	srv, dir := nolan.NewTestServer(b, func(cfg *config.Config) {
 		cfg.Bootstrap = true
 		cfg.BootstrapExpect = 1
 		cfg.StartAsLeader = true
@@ -346,7 +346,7 @@ func BenchmarkServer(b *testing.B) {
 		panic(err)
 	}
 
-	bValue := []byte("Hello from Jocko!")
+	bValue := []byte("Hello from nolan!")
 	msgValue := sarama.ByteEncoder(bValue)
 
 	var msgCount int
@@ -381,8 +381,8 @@ func BenchmarkServer(b *testing.B) {
 	})
 }
 
-func createTopic(t ti.T, s1 *jocko.Server, other ...*jocko.Server) error {
-	d := &jocko.Dialer{
+func createTopic(t ti.T, s1 *nolan.Server, other ...*nolan.Server) error {
+	d := &nolan.Dialer{
 		Timeout:   10 * time.Second,
 		DualStack: true,
 		ClientID:  t.Name(),

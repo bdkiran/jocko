@@ -56,7 +56,7 @@ func init() {
 func run(cmd *cobra.Command, args []string) {
 	var err error
 
-	log.SetPrefix(fmt.Sprintf("jocko: node id: %d: ", brokerCfg.ID))
+	log.SetPrefix(fmt.Sprintf("nolan: node id: %d: ", brokerCfg.ID))
 
 	cfg := jaegercfg.Configuration{
 		Sampler: &jaegercfg.SamplerConfig{
@@ -72,7 +72,7 @@ func run(cmd *cobra.Command, args []string) {
 	jMetricsFactory := metrics.NullFactory
 
 	tracer, closer, err := cfg.New(
-		"jocko",
+		"nolan",
 		jaegercfg.Logger(jLogger),
 		jaegercfg.Metrics(jMetricsFactory),
 	)
@@ -86,7 +86,7 @@ func run(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	srv := nolan.NewServer(brokerCfg, broker, nil, tracer, closer.Close)
+	srv := nolan.NewServer(brokerCfg, broker, tracer, closer.Close)
 	if err := srv.Start(context.Background()); err != nil {
 		fmt.Fprintf(os.Stderr, "error starting server: %v\n", err)
 		os.Exit(1)
@@ -170,7 +170,7 @@ func createTestBroker(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	srv := nolan.NewServer(config, broker, nil, tracer, closer.Close)
+	srv := nolan.NewServer(config, broker, tracer, closer.Close)
 	if err := srv.Start(context.Background()); err != nil {
 		fmt.Fprintf(os.Stderr, "error starting server: %v\n", err)
 		os.Exit(1)
