@@ -32,7 +32,7 @@ func (b *Broker) setupRaft() (err error) {
 		}
 	}()
 
-	b.fsm, err = fsm.New(b.tracer, fsm.NodeID(b.config.ID))
+	b.fsm, err = fsm.New(fsm.NodeID(b.config.ID))
 	if err != nil {
 		return err
 	}
@@ -182,7 +182,7 @@ RECONCILE:
 
 	if !establishedLeader {
 		if err := b.establishLeadership(); err != nil {
-			zap.S().Errorf("leader/%d: failedto establish leader error: %s", b.config.ID, err)
+			zap.S().Errorf("leader/%d: failed to establish leader error: %s", b.config.ID, err)
 			goto WAIT
 		}
 		establishedLeader = true
@@ -281,13 +281,15 @@ func (b *Broker) handleAliveMember(m serf.Member) error {
 			return err
 		}
 	}
-	zap.S().Debug(meta)
+	zap.S().Debugf("Finding node %d", meta.ID.Int32())
 	state := b.fsm.State()
 	_, node, err := state.GetNode(meta.ID.Int32())
 	if err != nil {
 		return err
 	}
 	if node != nil {
+		zap.S().Debugw("Node exists")
+		//zap.S().Debug(node)
 		// TODO: should still register?
 		return nil
 	}

@@ -40,7 +40,6 @@ require (
 	github.com/miekg/dns v1.0.14
 	github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77
 	github.com/nightlyone/lockfile v1.0.0 // indirect
-	github.com/opentracing/opentracing-go v1.0.2
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pierrec/lz4 v1.0.1
 	github.com/pkg/errors v0.9.1
@@ -53,8 +52,6 @@ require (
 	github.com/travisjeffery/go-dynaport v0.0.0-20171203090423-24009f4f2f49
 	github.com/travisjeffery/jocko v0.0.0-20201227025536-9613083803fc
 	github.com/tysontate/gommap v0.0.0-20131202084435-e87a6e482c2c
-	github.com/uber/jaeger-client-go v2.22.1+incompatible
-	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/ugorji/go v0.0.0-20180112141927-9831f2c3ac10
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/zap v1.16.0

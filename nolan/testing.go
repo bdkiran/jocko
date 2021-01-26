@@ -12,10 +12,6 @@ import (
 	"github.com/mitchellh/go-testing-interface"
 	dynaport "github.com/travisjeffery/go-dynaport"
 
-	"github.com/uber/jaeger-lib/metrics"
-
-	"github.com/uber/jaeger-client-go"
-	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"go.uber.org/zap"
 )
 
@@ -25,31 +21,31 @@ var (
 
 //NewTestServer is used to kick off a new broker and server for testing purposes
 func NewTestServer(t testing.T, cbBroker func(cfg *config.Config), cbServer func(cfg *config.Config)) (*Server, string) {
-	zap.S().Debugw("Starting the test server....")
+	zap.S().Debugw("Creating the test server....")
 	ports := dynaport.Get(4)
 	nodeID := atomic.AddInt32(&nodeNumber, 1)
 
-	cfg := jaegercfg.Configuration{
-		Sampler: &jaegercfg.SamplerConfig{
-			Type:  jaeger.SamplerTypeConst,
-			Param: 1,
-		},
-		Reporter: &jaegercfg.ReporterConfig{
-			LogSpans: true,
-		},
-	}
+	// cfg := jaegercfg.Configuration{
+	// 	Sampler: &jaegercfg.SamplerConfig{
+	// 		Type:  jaeger.SamplerTypeConst,
+	// 		Param: 1,
+	// 	},
+	// 	Reporter: &jaegercfg.ReporterConfig{
+	// 		LogSpans: true,
+	// 	},
+	// }
 
 	// jLogger := jaegerlog.StdLogger
-	jMetricsFactory := metrics.NullFactory
+	//jMetricsFactory := metrics.NullFactory
 
-	tracer, closer, err := cfg.New(
-		"nolan",
-		// jaegercfg.Logger(jLogger),
-		jaegercfg.Metrics(jMetricsFactory),
-	)
-	if err != nil {
-		panic(err)
-	}
+	// tracer, closer, err := cfg.New(
+	// 	"nolan",
+	// 	// jaegercfg.Logger(jLogger),
+	// 	jaegercfg.Metrics(jMetricsFactory),
+	// )
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	tmpDir, err := ioutil.TempDir("", fmt.Sprintf("nolan-test-server-%d", nodeID))
 	if err != nil {
@@ -84,7 +80,7 @@ func NewTestServer(t testing.T, cbBroker func(cfg *config.Config), cbServer func
 		cbBroker(config)
 	}
 
-	b, err := NewBroker(config, tracer)
+	b, err := NewBroker(config)
 	if err != nil {
 		t.Fatalf("err != nil: %s", err)
 	}
@@ -93,7 +89,7 @@ func NewTestServer(t testing.T, cbBroker func(cfg *config.Config), cbServer func
 		cbServer(config)
 	}
 
-	return NewServer(config, b, tracer, closer.Close), tmpDir
+	return NewServer(config, b), tmpDir
 }
 
 func TestJoin(t testing.T, s1 *Server, other ...*Server) {

@@ -16,10 +16,8 @@ import (
 	"github.com/hashicorp/consul/testutil/retry"
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/serf/serf"
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/require"
 
-	"github.com/bdkiran/nolan/log"
 	"github.com/bdkiran/nolan/nolan/config"
 	"github.com/bdkiran/nolan/nolan/structs"
 	"github.com/bdkiran/nolan/protocol"
@@ -28,7 +26,6 @@ import (
 
 func TestBroker_Run(t *testing.T) {
 	zap.S().Infow("Setting up test broker and running tests....")
-	log.SetPrefix("broker_test: ")
 
 	// creating the config up here so we can set the nodeid in the expected test cases
 	mustEncode := func(e protocol.Encoder) []byte {
@@ -456,11 +453,11 @@ func TestBroker_Run(t *testing.T) {
 			b := s.broker()
 
 			ctx, cancel := context.WithCancel(context.Background())
-			span := b.tracer.StartSpan("TestBroker_Run")
-			span.SetTag("name", tt.name)
-			span.SetTag("test", true)
-			defer span.Finish()
-			runCtx := opentracing.ContextWithSpan(ctx, span)
+			//span := b.tracer.StartSpan("TestBroker_Run")
+			//span.SetTag("name", tt.name)
+			//span.SetTag("test", true)
+			//defer span.Finish()
+			//runCtx := opentracing.ContextWithSpan(ctx, span)
 
 			defer func() {
 				os.RemoveAll(dir)
@@ -495,9 +492,9 @@ func TestBroker_Run(t *testing.T) {
 
 			for i := 0; i < len(tt.args.requests); i++ {
 				request := tt.args.requests[i]
-				reqSpan := b.tracer.StartSpan("request", opentracing.ChildOf(span.Context()))
+				//reqSpan := b.tracer.StartSpan("request", opentracing.ChildOf(span.Context()))
 
-				ctx := &Context{header: request.header, req: request.req, parent: opentracing.ContextWithSpan(runCtx, reqSpan)}
+				ctx := &Context{header: request.header, req: request.req}
 
 				tt.args.requestCh <- ctx
 
@@ -538,9 +535,9 @@ func setupTest(t *testing.T) (
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	span := b.tracer.StartSpan(t.Name())
-	span.SetTag("name", t.Name())
-	span.SetTag("test", true)
+	//span := b.tracer.StartSpan(t.Name())
+	//span.SetTag("name", t.Name())
+	//span.SetTag("test", true)
 
 	retry.Run(t, func(r *retry.R) {
 		if len(b.brokerLookup.Brokers()) != 1 {
@@ -556,13 +553,13 @@ func setupTest(t *testing.T) (
 	teardown = func() {
 		close(reqCh)
 		close(resCh)
-		span.Finish()
+		//span.Finish()
 		cancel()
 		os.RemoveAll(dir)
 		s.Shutdown()
 	}
 
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	//ctx = opentracing.ContextWithSpan(ctx, span)
 
 	return ctx, s, reqCh, resCh, teardown
 }

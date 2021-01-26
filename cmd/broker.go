@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"strconv"
@@ -15,12 +14,8 @@ import (
 	"github.com/bdkiran/nolan/nolan/config"
 	"github.com/spf13/cobra"
 	gracefully "github.com/tj/go-gracefully"
-	"github.com/uber/jaeger-lib/metrics"
 
 	"github.com/hashicorp/memberlist"
-	"github.com/uber/jaeger-client-go"
-	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegerlog "github.com/uber/jaeger-client-go/log"
 	"go.uber.org/zap"
 )
 
@@ -56,37 +51,37 @@ func init() {
 func run(cmd *cobra.Command, args []string) {
 	var err error
 
-	log.SetPrefix(fmt.Sprintf("nolan: node id: %d: ", brokerCfg.ID))
+	//log.SetPrefix(fmt.Sprintf("nolan: node id: %d: ", brokerCfg.ID))
 
-	cfg := jaegercfg.Configuration{
-		Sampler: &jaegercfg.SamplerConfig{
-			Type:  jaeger.SamplerTypeConst,
-			Param: 1,
-		},
-		Reporter: &jaegercfg.ReporterConfig{
-			LogSpans: true,
-		},
-	}
+	// cfg := jaegercfg.Configuration{
+	// 	Sampler: &jaegercfg.SamplerConfig{
+	// 		Type:  jaeger.SamplerTypeConst,
+	// 		Param: 1,
+	// 	},
+	// 	Reporter: &jaegercfg.ReporterConfig{
+	// 		LogSpans: true,
+	// 	},
+	// }
 
-	jLogger := jaegerlog.StdLogger
-	jMetricsFactory := metrics.NullFactory
+	// jLogger := jaegerlog.StdLogger
+	// jMetricsFactory := metrics.NullFactory
 
-	tracer, closer, err := cfg.New(
-		"nolan",
-		jaegercfg.Logger(jLogger),
-		jaegercfg.Metrics(jMetricsFactory),
-	)
-	if err != nil {
-		panic(err)
-	}
+	// tracer, closer, err := cfg.New(
+	// 	"nolan",
+	// 	jaegercfg.Logger(jLogger),
+	// 	jaegercfg.Metrics(jMetricsFactory),
+	// )
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	broker, err := nolan.NewBroker(brokerCfg, tracer)
+	broker, err := nolan.NewBroker(brokerCfg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error starting broker: %v\n", err)
 		os.Exit(1)
 	}
 
-	srv := nolan.NewServer(brokerCfg, broker, tracer, closer.Close)
+	srv := nolan.NewServer(brokerCfg, broker)
 	if err := srv.Start(context.Background()); err != nil {
 		fmt.Fprintf(os.Stderr, "error starting server: %v\n", err)
 		os.Exit(1)
@@ -109,27 +104,27 @@ func createTestBroker(cmd *cobra.Command, args []string) {
 
 	nodeID := atomic.AddInt32(&nodeNumber, 1)
 
-	cfg := jaegercfg.Configuration{
-		Sampler: &jaegercfg.SamplerConfig{
-			Type:  jaeger.SamplerTypeConst,
-			Param: 1,
-		},
-		Reporter: &jaegercfg.ReporterConfig{
-			LogSpans: true,
-		},
-	}
+	// cfg := jaegercfg.Configuration{
+	// 	Sampler: &jaegercfg.SamplerConfig{
+	// 		Type:  jaeger.SamplerTypeConst,
+	// 		Param: 1,
+	// 	},
+	// 	Reporter: &jaegercfg.ReporterConfig{
+	// 		LogSpans: true,
+	// 	},
+	// }
 
 	// jLogger := jaegerlog.StdLogger
-	jMetricsFactory := metrics.NullFactory
+	// jMetricsFactory := metrics.NullFactory
 
-	tracer, closer, err := cfg.New(
-		"nolan",
-		// jaegercfg.Logger(jLogger),
-		jaegercfg.Metrics(jMetricsFactory),
-	)
-	if err != nil {
-		panic(err)
-	}
+	// tracer, closer, err := cfg.New(
+	// 	"nolan",
+	// 	// jaegercfg.Logger(jLogger),
+	// 	jaegercfg.Metrics(jMetricsFactory),
+	// )
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	tmpDir, err := ioutil.TempDir("", fmt.Sprintf("nolan-test-server-%d", nodeID))
 	if err != nil {
@@ -164,13 +159,13 @@ func createTestBroker(cmd *cobra.Command, args []string) {
 	config.BootstrapExpect = 1
 	config.StartAsLeader = true
 
-	broker, err := nolan.NewBroker(config, tracer)
+	broker, err := nolan.NewBroker(config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error starting broker: %v\n", err)
 		os.Exit(1)
 	}
 
-	srv := nolan.NewServer(config, broker, tracer, closer.Close)
+	srv := nolan.NewServer(config, broker)
 	if err := srv.Start(context.Background()); err != nil {
 		fmt.Fprintf(os.Stderr, "error starting server: %v\n", err)
 		os.Exit(1)

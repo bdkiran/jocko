@@ -10,7 +10,7 @@ import (
 	"github.com/bdkiran/nolan/protocol"
 )
 
-//Context is an interface that provides
+//Context is an interface that provides???
 type Context struct {
 	mu     sync.Mutex
 	conn   io.ReadWriter

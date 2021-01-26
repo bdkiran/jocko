@@ -7,10 +7,12 @@
 This is a fork of the Jocko Repository.
 
 ## Why?
+
 *nolan* is intended to reduce overhead that comes with setting up a distributed commit log or queue. Weather it's used for website activity tracking or application log aggregation, this tool should be able to provide stable groundwork for many use cases. 
 
 ## How?
-*nolan* follows design patterns very similar to Kafka. Without a zookeeper dependency, nolan utilizes [raft](https://raft.github.io/) to achieve its distributed and scalable goals. 
+
+*nolan* follows design patterns very similar to Kafka. Without a zookeeper dependency, nolan utilizes [raft](https://raft.github.io/) to achieve its distributed and scalable goals.
 
 ## Gaols of the Project
 

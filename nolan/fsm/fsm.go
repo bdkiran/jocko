@@ -9,10 +9,8 @@ import (
 
 	"github.com/bdkiran/nolan/log"
 	"github.com/bdkiran/nolan/nolan/structs"
-	"github.com/bdkiran/nolan/nolan/util"
 	memdb "github.com/hashicorp/go-memdb"
 	"github.com/hashicorp/raft"
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/ugorji/go/codec"
 )
 
@@ -40,37 +38,39 @@ func registerCommand(msg structs.MessageType, fn unboundCommand) {
 }
 
 type NodeID int32
-type Tracer opentracing.Tracer
+
+//type Tracer opentracing.Tracer
 
 // FSM implements a finite state machine used with Raft to provide strong consistency.
 type FSM struct {
 	apply     map[structs.MessageType]command
 	stateLock sync.RWMutex
 	state     *Store
-	tracer    opentracing.Tracer
-	nodeID    NodeID
+	//tracer    opentracing.Tracer
+	nodeID NodeID
 }
 
 // New returns a new FSM instance.
 func New(args ...interface{}) (*FSM, error) {
+	//If args is empty what to do?
 	var nodeID NodeID
-	var tracer Tracer
+	//var tracer Tracer
 	for _, arg := range args {
 		switch a := arg.(type) {
 		case NodeID:
 			nodeID = a
-		case Tracer:
-			tracer = a
+			// case Tracer:
+			// 	tracer = a
 		}
 	}
-	store, err := NewStore(tracer, nodeID)
+	store, err := NewStore(nodeID)
 	if err != nil {
 		return nil, err
 	}
 	fsm := &FSM{
-		apply:  make(map[structs.MessageType]command),
-		state:  store,
-		tracer: tracer,
+		apply: make(map[structs.MessageType]command),
+		state: store,
+		//tracer: tracer,
 		nodeID: nodeID,
 	}
 	for msg, fn := range commands {
@@ -89,6 +89,7 @@ func (c *FSM) State() *Store {
 	return c.state
 }
 
+// Apply uses a new rafte log with the FSM
 func (c *FSM) Apply(l *raft.Log) interface{} {
 	buf := l.Data
 	msgType := structs.MessageType(buf[0])
@@ -98,10 +99,11 @@ func (c *FSM) Apply(l *raft.Log) interface{} {
 	return nil
 }
 
+// Restore reverts the FSM back from a previous state
 func (c *FSM) Restore(old io.ReadCloser) error {
 	defer old.Close()
 
-	newState, err := NewStore(c.tracer)
+	newState, err := NewStore()
 	if err != nil {
 		return err
 	}
@@ -145,6 +147,7 @@ func (c *FSM) Restore(old io.ReadCloser) error {
 	return nil
 }
 
+// Snapshot take a snapshot of FSM
 func (c *FSM) Snapshot() (raft.FSMSnapshot, error) {
 	return &snapshot{c.state.Snapshot()}, nil
 }
@@ -162,16 +165,18 @@ func registerSchema(fn schemaFn) {
 	schemas = append(schemas, fn)
 }
 
+// Store is the lower level storage mechanism used the the FSM
 type Store struct {
 	schema *memdb.DBSchema
 	db     *memdb.MemDB
 	// abandonCh is used to signal watchers this store has been abandoned
 	// (usually during a restore).
 	abandonCh chan struct{}
-	tracer    opentracing.Tracer
-	nodeID    NodeID
+	//tracer    opentracing.Tracer
+	nodeID NodeID
 }
 
+// NewStore creates a new store
 func NewStore(args ...interface{}) (*Store, error) {
 	dbSchema := &memdb.DBSchema{
 		Tables: make(map[string]*memdb.TableSchema),
@@ -196,8 +201,8 @@ func NewStore(args ...interface{}) (*Store, error) {
 		switch a := arg.(type) {
 		case NodeID:
 			s.nodeID = a
-		case Tracer:
-			s.tracer = a
+			//case Tracer:
+			//s.tracer = a
 		}
 	}
 	return s, nil
@@ -217,10 +222,10 @@ func (s *Store) AbandonCh() <-chan struct{} {
 
 // GetNode is used to retrieve a node by node name ID.
 func (s *Store) GetNode(id int32) (uint64, *structs.Node, error) {
-	sp := s.tracer.StartSpan("store: get node")
-	sp.LogKV("id", id)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: get node")
+	//sp.LogKV("id", id)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(false)
 	defer tx.Abort()
@@ -237,9 +242,10 @@ func (s *Store) GetNode(id int32) (uint64, *structs.Node, error) {
 	return idx, nil, nil
 }
 
+// GetNodes retrieves nodes from a given store
 func (s *Store) GetNodes() (uint64, []*structs.Node, error) {
-	sp := s.tracer.StartSpan("store: get nodes")
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: get nodes")
+	//defer sp.Finish()
 
 	tx := s.db.Txn(false)
 	defer tx.Abort()
@@ -258,10 +264,10 @@ func (s *Store) GetNodes() (uint64, []*structs.Node, error) {
 
 // EnsureNode is used to upsert nodes.
 func (s *Store) EnsureNode(idx uint64, node *structs.Node) error {
-	sp := s.tracer.StartSpan("store: ensure node")
-	s.vlog(sp, "node", node)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: ensure node")
+	//s.vlog(sp, "node", node)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(true)
 	defer tx.Abort()
@@ -276,10 +282,10 @@ func (s *Store) EnsureNode(idx uint64, node *structs.Node) error {
 
 // DeleteNode is used to delete nodes.
 func (s *Store) DeleteNode(idx uint64, id int32) error {
-	sp := s.tracer.StartSpan("store: delete node")
-	sp.LogKV("id", id)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: delete node")
+	//sp.LogKV("id", id)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(true)
 	defer tx.Abort()
@@ -315,10 +321,10 @@ func (s *Store) deleteNodeTxn(tx *memdb.Txn, idx uint64, id int32) error {
 }
 
 func (s *Store) EnsureRegistration(idx uint64, req *structs.RegisterNodeRequest) error {
-	sp := s.tracer.StartSpan("store: ensure registration")
-	s.vlog(sp, "req", req)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: ensure registration")
+	//s.vlog(sp, "req", req)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(true)
 	defer tx.Abort()
@@ -377,15 +383,15 @@ func (s *Store) ensureNodeTxn(tx *memdb.Txn, idx uint64, node *structs.Node) err
 }
 
 func (s *Store) EnsureTopic(idx uint64, topic *structs.Topic) error {
-	sp := s.tracer.StartSpan("store: ensure topic")
-	s.vlog(sp, "topic", topic)
-	sp.SetTag("node id", s.nodeID)
+	//sp := s.tracer.StartSpan("store: ensure topic")
+	//s.vlog(sp, "topic", topic)
+	//sp.SetTag("node id", s.nodeID)
 
 	if topic.Config == nil {
 		topic.Config = structs.NewTopicConfig()
 	}
 
-	defer sp.Finish()
+	//defer sp.Finish()
 
 	tx := s.db.Txn(true)
 	defer tx.Abort()
@@ -428,10 +434,10 @@ func (s *Store) ensureTopicTxn(tx *memdb.Txn, idx uint64, topic *structs.Topic) 
 
 // GetTopic is used to get topics.
 func (s *Store) GetTopic(id string) (uint64, *structs.Topic, error) {
-	sp := s.tracer.StartSpan("store: get topic")
-	sp.LogKV("id", id)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: get topic")
+	//sp.LogKV("id", id)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(false)
 	defer tx.Abort()
@@ -449,9 +455,9 @@ func (s *Store) GetTopic(id string) (uint64, *structs.Topic, error) {
 }
 
 func (s *Store) GetTopics() (uint64, []*structs.Topic, error) {
-	sp := s.tracer.StartSpan("store: get topics")
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: get topics")
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(false)
 	defer tx.Abort()
@@ -501,10 +507,10 @@ func (s *Store) deleteTopicTxn(tx *memdb.Txn, idx uint64, id string) error {
 }
 
 func (s *Store) EnsureGroup(idx uint64, group *structs.Group) error {
-	sp := s.tracer.StartSpan("store: ensure group")
-	s.vlog(sp, "group", group)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: ensure group")
+	//s.vlog(sp, "group", group)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(true)
 	defer tx.Abort()
@@ -547,10 +553,10 @@ func (s *Store) ensureGroupTxn(tx *memdb.Txn, idx uint64, group *structs.Group) 
 
 // GetGroup is used to get groups.
 func (s *Store) GetGroup(id string) (uint64, *structs.Group, error) {
-	sp := s.tracer.StartSpan("store: get group")
-	sp.LogKV("id", id)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: get group")
+	//sp.LogKV("id", id)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(false)
 	defer tx.Abort()
@@ -568,8 +574,8 @@ func (s *Store) GetGroup(id string) (uint64, *structs.Group, error) {
 }
 
 func (s *Store) GetGroups() (uint64, []*structs.Group, error) {
-	sp := s.tracer.StartSpan("store: get groups")
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: get groups")
+	//defer sp.Finish()
 
 	tx := s.db.Txn(false)
 	defer tx.Abort()
@@ -588,10 +594,10 @@ func (s *Store) GetGroups() (uint64, []*structs.Group, error) {
 
 // GetGroupsByCoordinator looks up groups with the given coordinator.
 func (s *Store) GetGroupsByCoordinator(coordinator int32) (uint64, []*structs.Group, error) {
-	sp := s.tracer.StartSpan("store: get groups by coordinator")
-	sp.LogKV("coordinator", coordinator)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: get groups by coordinator")
+	//sp.LogKV("coordinator", coordinator)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(false)
 	defer tx.Abort()
@@ -612,10 +618,10 @@ func (s *Store) GetGroupsByCoordinator(coordinator int32) (uint64, []*structs.Gr
 
 // DeleteGroup is used to delete groups.
 func (s *Store) DeleteGroup(idx uint64, group string) error {
-	sp := s.tracer.StartSpan("store: delete group")
-	sp.LogKV("group", group, "group")
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: delete group")
+	//sp.LogKV("group", group, "group")
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(true)
 	defer tx.Abort()
@@ -649,10 +655,10 @@ func (s *Store) deleteGroupTxn(tx *memdb.Txn, idx uint64, id string) error {
 }
 
 func (s *Store) EnsurePartition(idx uint64, partition *structs.Partition) error {
-	sp := s.tracer.StartSpan("store: ensure partition")
-	s.vlog(sp, "partition", partition)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: ensure partition")
+	//s.vlog(sp, "partition", partition)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(true)
 	defer tx.Abort()
@@ -695,10 +701,10 @@ func (s *Store) ensurePartitionTxn(tx *memdb.Txn, idx uint64, partition *structs
 
 // GetPartition is used to get partitions.
 func (s *Store) GetPartition(topic string, id int32) (uint64, *structs.Partition, error) {
-	sp := s.tracer.StartSpan("store: get partition")
-	sp.LogKV("id", id)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: get partition")
+	//sp.LogKV("id", id)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(false)
 	defer tx.Abort()
@@ -717,9 +723,9 @@ func (s *Store) GetPartition(topic string, id int32) (uint64, *structs.Partition
 
 // PartitionsByLeader is used to return all partitions for the given leader.
 func (s *Store) PartitionsByLeader(leader int32) (uint64, []*structs.Partition, error) {
-	sp := s.tracer.StartSpan("store: partitions by leader")
-	sp.SetTag("leader", leader)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: partitions by leader")
+	//sp.SetTag("leader", leader)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(false)
 	defer tx.Abort()
@@ -736,8 +742,8 @@ func (s *Store) PartitionsByLeader(leader int32) (uint64, []*structs.Partition, 
 }
 
 func (s *Store) GetPartitions() (uint64, []*structs.Partition, error) {
-	sp := s.tracer.StartSpan("store: get partitions")
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: get partitions")
+	//defer sp.Finish()
 
 	tx := s.db.Txn(false)
 	defer tx.Abort()
@@ -755,10 +761,10 @@ func (s *Store) GetPartitions() (uint64, []*structs.Partition, error) {
 
 // DeletePartition is used to delete partitions.
 func (s *Store) DeletePartition(idx uint64, topic string, partition int32) error {
-	sp := s.tracer.StartSpan("store: delete partition")
-	sp.LogKV("topic", topic, "partition", partition)
-	sp.SetTag("node id", s.nodeID)
-	defer sp.Finish()
+	//sp := s.tracer.StartSpan("store: delete partition")
+	//sp.LogKV("topic", topic, "partition", partition)
+	//sp.SetTag("node id", s.nodeID)
+	//defer sp.Finish()
 
 	tx := s.db.Txn(true)
 	defer tx.Abort()
@@ -798,16 +804,18 @@ func (s *Store) maxIndex(tables ...string) uint64 {
 	return maxIndexTxn(tx, tables...)
 }
 
+// Restore restores the store from the last checkpoint
 func (s *Store) Restore() *Restore {
 	tx := s.db.Txn(true)
 	return &Restore{s, tx}
 }
 
-func (s *Store) vlog(span opentracing.Span, k string, i interface{}) {
-	if fsmVerboseLogs {
-		span.LogKV(k, util.Dump(i))
-	}
-}
+// TODO: resurect this fuction to get this working with new logger
+// func (s *Store) vlog(span opentracing.Span, k string, i interface{}) {
+// 	if fsmVerboseLogs {
+// 		span.LogKV(k, util.Dump(i))
+// 	}
+// }
 
 // Restore is used to manage restoring a large amount of data into the state
 // store. It works by doing all the restores inside of a single transaction.
@@ -826,6 +834,7 @@ func (s *Restore) Commit() {
 	s.tx.Commit()
 }
 
+// Snapshot takes a point in time reference of the store
 func (s *Store) Snapshot() *Snapshot {
 	tx := s.db.Txn(false)
 

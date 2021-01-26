@@ -11,7 +11,6 @@ import (
 	"github.com/bdkiran/nolan/nolan/config"
 	"github.com/bdkiran/nolan/protocol"
 	"github.com/davecgh/go-spew/spew"
-	opentracing "github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 )
 
@@ -48,15 +47,15 @@ type Server struct {
 	shutdown     bool
 	shutdownCh   chan struct{}
 	shutdownLock sync.Mutex
+	requestCh    chan *Context
+	responseCh   chan *Context
+	close        func() error
 	//metrics      *Metrics
-	requestCh  chan *Context
-	responseCh chan *Context
-	tracer     opentracing.Tracer
-	close      func() error
+	//tracer     opentracing.Tracer
 }
 
 //NewServer creates and returns a new sever struct
-func NewServer(config *config.Config, handler Handler, tracer opentracing.Tracer, close func() error) *Server {
+func NewServer(config *config.Config, handler Handler) *Server {
 	s := &Server{
 		config:  config,
 		handler: handler,
@@ -64,14 +63,15 @@ func NewServer(config *config.Config, handler Handler, tracer opentracing.Tracer
 		shutdownCh: make(chan struct{}),
 		requestCh:  make(chan *Context, 1024),
 		responseCh: make(chan *Context, 1024),
-		tracer:     tracer,
-		close:      close,
+		//tracer:     tracer,
+		//close: close,
 	}
 	return s
 }
 
 // Start starts the service.
 func (s *Server) Start(ctx context.Context) error {
+	zap.S().Debugw("Starting test server...")
 	//Resolve the tcp address from the server configuration
 	protocolAddr, err := net.ResolveTCPAddr("tcp", s.config.Addr)
 	if err != nil {
@@ -111,16 +111,16 @@ func (s *Server) Start(ctx context.Context) error {
 			case <-s.shutdownCh:
 				break
 			case respCtx := <-s.responseCh:
-				if queueSpan, ok := respCtx.Value(responseQueueSpanKey).(opentracing.Span); ok {
-					queueSpan.Finish()
-				}
+				// if queueSpan, ok := respCtx.Value(responseQueueSpanKey).(opentracing.Span); ok {
+				// 	queueSpan.Finish()
+				// }
 				if err := s.handleResponse(respCtx); err != nil {
 					zap.S().Errorf("server/%d: listener accept error: %s", s.config.ID, err)
 				}
 			}
 		}
 	}()
-	zap.S().Debugf("server/%d: run handler", s.config.ID)
+	zap.S().Debugf("server/%d: Running server", s.config.ID)
 	//Runs the broker...
 	go s.handler.Run(ctx, s.requestCh, s.responseCh)
 
@@ -151,7 +151,7 @@ func (s *Server) Shutdown() error {
 		return err
 	}
 
-	s.close()
+	//s.close()
 
 	return nil
 }
@@ -170,8 +170,8 @@ func (s *Server) handleRequest(conn net.Conn) {
 			break
 		}
 
-		span := s.tracer.StartSpan("request")
-		decodeSpan := s.tracer.StartSpan("server: decode request", opentracing.ChildOf(span.Context()))
+		//span := s.tracer.StartSpan("request")
+		//decodeSpan := s.tracer.StartSpan("server: decode request", opentracing.ChildOf(span.Context()))
 
 		size := protocol.Encoding.Uint32(p)
 		if size == 0 {
@@ -183,8 +183,8 @@ func (s *Server) handleRequest(conn net.Conn) {
 
 		if _, err = io.ReadFull(conn, b[4:]); err != nil {
 			// TODO: handle request
-			span.LogKV("msg", "failed to read from connection", "err", err)
-			span.Finish()
+			//span.LogKV("msg", "failed to read from connection", "err", err)
+			//span.Finish()
 			zap.S().Panic(err)
 			//panic(err)
 		}
@@ -193,17 +193,17 @@ func (s *Server) handleRequest(conn net.Conn) {
 		header := new(protocol.RequestHeader)
 		if err := header.Decode(d); err != nil {
 			// TODO: handle err
-			span.LogKV("msg", "failed to decode header", "err", err)
-			span.Finish()
+			//span.LogKV("msg", "failed to decode header", "err", err)
+			//span.Finish()
 			zap.S().Panic(err)
 		}
 
-		span.SetTag("api_key", header.APIKey)
-		span.SetTag("correlation_id", header.CorrelationID)
-		span.SetTag("client_id", header.ClientID)
-		span.SetTag("size", size)
-		span.SetTag("node_id", s.config.ID) // can I set this globally for the tracer?
-		span.SetTag("addr", s.config.Addr)
+		//span.SetTag("api_key", header.APIKey)
+		//span.SetTag("correlation_id", header.CorrelationID)
+		//span.SetTag("client_id", header.ClientID)
+		//span.SetTag("size", size)
+		//span.SetTag("node_id", s.config.ID) // can I set this globally for the tracer?
+		//span.SetTag("addr", s.config.Addr)
 
 		var req protocol.VersionedDecoder
 
@@ -254,19 +254,19 @@ func (s *Server) handleRequest(conn net.Conn) {
 
 		if err := req.Decode(d, header.APIVersion); err != nil {
 			zap.S().Errorf("server/%d: %s: decode request failed: %s", s.config.ID, header, err)
-			span.LogKV("msg", "failed to decode request", "err", err)
-			span.Finish()
+			//span.LogKV("msg", "failed to decode request", "err", err)
+			//span.Finish()
 			zap.S().Panic(err)
 		}
 
-		decodeSpan.Finish()
+		//decodeSpan.Finish()
 
-		ctx := opentracing.ContextWithSpan(context.Background(), span)
-		queueSpan := s.tracer.StartSpan("server: queue request", opentracing.ChildOf(span.Context()))
-		ctx = context.WithValue(ctx, requestQueueSpanKey, queueSpan)
+		//ctx := opentracing.ContextWithSpan(context.Background(), span)
+		//queueSpan := s.tracer.StartSpan("server: queue request", opentracing.ChildOf(span.Context()))
+		//ctx = context.WithValue(ctx, requestQueueSpanKey, queueSpan)
 
 		reqCtx := &Context{
-			parent: ctx,
+			//parent: ctx,
 			header: header,
 			req:    req,
 			conn:   conn,
@@ -278,12 +278,12 @@ func (s *Server) handleRequest(conn net.Conn) {
 }
 
 func (s *Server) handleResponse(respCtx *Context) error {
-	psp := opentracing.SpanFromContext(respCtx)
-	sp := s.tracer.StartSpan("server: handle response", opentracing.ChildOf(psp.Context()))
+	//psp := opentracing.SpanFromContext(respCtx)
+	//sp := s.tracer.StartSpan("server: handle response", opentracing.ChildOf(psp.Context()))
 	zap.S().Debugf("server/%d: handle response: %s", s.config.ID, respCtx)
 
-	defer psp.Finish()
-	defer sp.Finish()
+	//defer psp.Finish()
+	//defer sp.Finish()
 
 	b, err := protocol.Encode(respCtx.res.(protocol.Encoder))
 	if err != nil {
