@@ -7,11 +7,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/bdkiran/nolan/log"
 	"github.com/bdkiran/nolan/nolan/structs"
 	memdb "github.com/hashicorp/go-memdb"
 	"github.com/hashicorp/raft"
 	"github.com/ugorji/go/codec"
+	"go.uber.org/zap"
 )
 
 var (
@@ -37,9 +37,8 @@ func registerCommand(msg structs.MessageType, fn unboundCommand) {
 	commands[msg] = fn
 }
 
+//NodeID is the type that references the node store in the fsm
 type NodeID int32
-
-//type Tracer opentracing.Tracer
 
 // FSM implements a finite state machine used with Raft to provide strong consistency.
 type FSM struct {
@@ -301,7 +300,7 @@ func (s *Store) DeleteNode(idx uint64, id int32) error {
 func (s *Store) deleteNodeTxn(tx *memdb.Txn, idx uint64, id int32) error {
 	node, err := tx.First("nodes", "id", id)
 	if err != nil {
-		log.Error.Printf("fsm: node lookup error: %s", err)
+		zap.S().Errorf("fsm: node lookup error: %s", err)
 		return err
 	}
 	if node == nil {
@@ -309,12 +308,12 @@ func (s *Store) deleteNodeTxn(tx *memdb.Txn, idx uint64, id int32) error {
 	}
 	// todo: delete anything attached to the node
 	if err := tx.Delete("nodes", node); err != nil {
-		log.Error.Printf("fsm: deleting node error: %s", err)
+		zap.S().Errorf("fsm: deleting node error: %s", err)
 		return err
 	}
 	// update the index
 	if err := tx.Insert("index", &IndexEntry{"nodes", idx}); err != nil {
-		log.Error.Printf("fsm: updating index error: %s", err)
+		zap.S().Errorf("fsm: updating index error: %s", err)
 		return err
 	}
 	return nil
@@ -340,7 +339,7 @@ func (s *Store) EnsureRegistration(idx uint64, req *structs.RegisterNodeRequest)
 func (s *Store) ensureRegistration(tx *memdb.Txn, idx uint64, req *structs.RegisterNodeRequest) error {
 	existing, err := tx.First("nodes", "id", req.Node.Node)
 	if err != nil {
-		log.Error.Printf("fsm: node lookup error: %s", err)
+		zap.S().Errorf("fsm: node lookup error: %s", err)
 		return err
 	}
 
@@ -489,18 +488,18 @@ func (s *Store) DeleteTopic(idx uint64, id string) error {
 func (s *Store) deleteTopicTxn(tx *memdb.Txn, idx uint64, id string) error {
 	topic, err := tx.First("topics", "id", id)
 	if err != nil {
-		log.Error.Printf("fsm: topic lookup error: %s", err)
+		zap.S().Errorf("fsm: topic lookup error: %s", err)
 		return err
 	}
 	if topic == nil {
 		return nil
 	}
 	if err := tx.Delete("topics", topic); err != nil {
-		log.Error.Printf("fsm: deleting topic error: %s", err)
+		zap.S().Errorf("fsm: deleting topic error: %s", err)
 		return err
 	}
 	if err := tx.Insert("index", &IndexEntry{"topics", idx}); err != nil {
-		log.Error.Printf("fsm: updating index error: %s", err)
+		zap.S().Errorf("fsm: updating index error: %s", err)
 		return err
 	}
 	return nil
@@ -637,18 +636,18 @@ func (s *Store) DeleteGroup(idx uint64, group string) error {
 func (s *Store) deleteGroupTxn(tx *memdb.Txn, idx uint64, id string) error {
 	group, err := tx.First("groups", "id", id)
 	if err != nil {
-		log.Error.Printf("fsm: group lookup error: %s", err)
+		zap.S().Errorf("fsm: group lookup error: %s", err)
 		return err
 	}
 	if group == nil {
 		return nil
 	}
 	if err := tx.Delete("groups", group); err != nil {
-		log.Error.Printf("fsm: deleting group error: %s", err)
+		zap.S().Errorf("fsm: deleting group error: %s", err)
 		return err
 	}
 	if err := tx.Insert("index", &IndexEntry{"groups", idx}); err != nil {
-		log.Error.Printf("fsm: updating index error: %s", err)
+		zap.S().Errorf("fsm: updating index error: %s", err)
 		return err
 	}
 	return nil
@@ -780,18 +779,18 @@ func (s *Store) DeletePartition(idx uint64, topic string, partition int32) error
 func (s *Store) deletePartitionTxn(tx *memdb.Txn, idx uint64, topic string, id int32) error {
 	partition, err := tx.First("partitions", "id", topic, id)
 	if err != nil {
-		log.Error.Printf("fsm: partition lookup error: %s", err)
+		zap.S().Errorf("fsm: partition lookup error: %s", err)
 		return err
 	}
 	if partition == nil {
 		return nil
 	}
 	if err := tx.Delete("partitions", partition); err != nil {
-		log.Error.Printf("fsm: deleting partition error: %s", err)
+		zap.S().Errorf("fsm: deleting partition error: %s", err)
 		return err
 	}
 	if err := tx.Insert("index", &IndexEntry{"partitions", idx}); err != nil {
-		log.Error.Printf("fsm: updating index error: %s", err)
+		zap.S().Errorf("fsm: updating index error: %s", err)
 		return err
 	}
 	return nil

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/bdkiran/nolan/log"
 	"github.com/bdkiran/nolan/nolan/metadata"
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/serf/serf"
@@ -18,12 +17,16 @@ const (
 )
 
 func (b *Broker) setupSerf(config *serf.Config, ch chan serf.Event, path string) (*serf.Serf, error) {
+	//Not sure how to use the global logger??
+	logger := zap.NewExample()
+	defer logger.Sync()
+
 	config.Init()
 	config.NodeName = b.config.NodeName
 	config.Tags["role"] = "nolan"
 	config.Tags["id"] = fmt.Sprintf("%d", b.config.ID)
-	config.Logger = log.NewStdLogger(log.New(log.DebugLevel, fmt.Sprintf("serf/%d: ", b.config.ID)))
-	config.MemberlistConfig.Logger = log.NewStdLogger(log.New(log.DebugLevel, fmt.Sprintf("memberlist/%d: ", b.config.ID)))
+	config.Logger = zap.NewStdLog(logger)                  //log.NewStdLogger(log.New(log.DebugLevel, fmt.Sprintf("serf/%d: ", b.config.ID)))
+	config.MemberlistConfig.Logger = zap.NewStdLog(logger) //log.NewStdLogger(log.New(log.DebugLevel, fmt.Sprintf("memberlist/%d: ", b.config.ID)))
 	if b.config.Bootstrap {
 		config.Tags["bootstrap"] = "1"
 	}
@@ -131,6 +134,7 @@ func (b *Broker) maybeBootstrap() {
 	}
 
 	members := b.LANMembers()
+	zap.S().Debugf("Members: %v", members)
 	brokers := make([]metadata.Broker, 0, len(members))
 	for _, member := range members {
 		meta, ok := metadata.IsBroker(member)

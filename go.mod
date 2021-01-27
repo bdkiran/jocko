@@ -59,5 +59,4 @@ require (
 	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	upspin.io v0.0.0-20180517055408-63f1073c7a3a
 )

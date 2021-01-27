@@ -69,7 +69,7 @@ type Broker struct {
 	// brokerLookup tracks servers in the local datacenter.
 	brokerLookup  *brokerLookup
 	replicaLookup *replicaLookup
-	// The raft instance is used among Jocko brokers within the DC to protect operations that require strong consistency.
+	// The raft instance is used among Nolan brokers within the DC to protect operations that require strong consistency.
 	raft          *raft.Raft
 	raftStore     *raftboltdb.BoltStore
 	raftTransport *raft.NetworkTransport
@@ -1238,7 +1238,7 @@ func (b *Broker) becomeFollower(replica *Replica, cmd *protocol.PartitionState) 
 	if broker == nil {
 		return protocol.ErrBrokerNotAvailable
 	}
-	conn, err := NewDialer(fmt.Sprintf("jocko-replicator-%d", b.config.ID)).Dial("tcp", broker.BrokerAddr)
+	conn, err := NewDialer(fmt.Sprintf("nolan-replicator-%d", b.config.ID)).Dial("tcp", broker.BrokerAddr)
 	if err != nil {
 		return protocol.ErrUnknown.WithErr(err)
 	}

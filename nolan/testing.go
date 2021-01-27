@@ -92,6 +92,7 @@ func NewTestServer(t testing.T, cbBroker func(cfg *config.Config), cbServer func
 	return NewServer(config, b), tmpDir
 }
 
+// Test join joins another running server
 func TestJoin(t testing.T, s1 *Server, other ...*Server) {
 	addr := fmt.Sprintf("127.0.0.1:%d",
 		s1.config.SerfLANConfig.MemberlistConfig.BindPort)

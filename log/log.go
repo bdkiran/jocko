@@ -1,95 +1,29 @@
 package log
 
 import (
-	stdlog "log"
+	"log"
 
-	"upspin.io/log"
+	"go.uber.org/zap"
 )
 
-var (
-	Debug = &logger{l: log.Debug}
-	Info  = &logger{l: log.Info}
-	Error = &logger{l: log.Error}
-)
+/*
+Zap is a lightweight verbose logging tool that needs limited
+configurattion.
+- Transfering all the logging output to utilize zap
+- Need to figure ou to to initialize logger before all tests
+	-Maybe a setup function?
+- Can potentially move to a custom logging solution in the future
+*/
 
-type logger struct {
-	prefix string
-	l      log.Logger
-}
-
-type Level = log.Level
-
-var (
-	DebugLevel = log.DebugLevel
-	InfoLevel  = log.InfoLevel
-	ErrorLevel = log.ErrorLevel
-)
-
-func New(level log.Level, prefix string) *logger {
-	l := &logger{prefix: prefix}
-	switch level {
-	case log.DebugLevel:
-		l.l = log.Debug
-	case log.InfoLevel:
-		l.l = log.Info
-	case log.ErrorLevel:
-		l.l = log.Error
+//Initialize sets up a zap global logger
+//Allow for this to be configurable for development
+//and production use for max performance.
+func Initialize() {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		log.Fatalln("Unable to Start logger")
 	}
-	return l
+	defer logger.Sync()
+	//sugar := logger.Sugar()
+	zap.ReplaceGlobals(logger)
 }
-
-func SetPrefix(prefix string) {
-	for _, logger := range []*logger{Debug, Info, Error} {
-		logger.prefix = prefix
-	}
-}
-
-func SetLevel(level string) {
-	log.SetLevel(level)
-}
-
-func NewStdLogger(l log.Logger) *stdlog.Logger {
-	return log.NewStdLogger(l)
-}
-
-func (l *logger) Printf(format string, v ...interface{}) {
-	if l.prefix == "" {
-		l.l.Printf(format, v...)
-	} else {
-		l.l.Printf(l.prefix+format, v...)
-	}
-}
-
-func (l *logger) Print(v ...interface{}) {
-	if l.prefix == "" {
-		l.l.Print(v...)
-	} else {
-		l.l.Print(append([]interface{}{l.prefix}, v...)...)
-	}
-}
-
-func (l *logger) Println(v ...interface{}) {
-	if l.prefix == "" {
-		l.l.Println(v...)
-	} else {
-		l.l.Println(append([]interface{}{l.prefix}, v...)...)
-	}
-}
-
-func (l *logger) Fatal(v ...interface{}) {
-	if l.prefix == "" {
-		l.l.Fatal(v...)
-	} else {
-		l.l.Fatal(append([]interface{}{l.prefix}, v...)...)
-	}
-}
-
-func (l *logger) Fatalf(format string, v ...interface{}) {
-	if l.prefix == "" {
-		l.l.Fatalf(format, v...)
-	} else {
-		l.l.Fatalf(l.prefix+format, v...)
-	}
-}
-
-var _ log.Logger = (*logger)(nil)

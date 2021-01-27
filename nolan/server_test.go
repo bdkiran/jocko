@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/bdkiran/nolan/log"
 	"github.com/bdkiran/nolan/nolan"
 	"github.com/bdkiran/nolan/nolan/config"
 	"github.com/bdkiran/nolan/protocol"
@@ -16,20 +15,20 @@ import (
 	"github.com/hashicorp/consul/testutil/retry"
 	ti "github.com/mitchellh/go-testing-interface"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 const (
 	topic = "test_topic"
 )
 
-func init() {
-	log.SetLevel("debug")
-}
-
 func TestProduceConsume(t *testing.T) {
+	logger := zap.NewExample()
+	defer logger.Sync()
+
 	t.Skip()
 
-	sarama.Logger = log.NewStdLogger(log.New(log.DebugLevel, "server_test: sarama: "))
+	sarama.Logger = zap.NewStdLog(logger) //log.NewStdLogger(log.New(log.DebugLevel, "server_test: sarama: "))
 
 	s1, dir1 := nolan.NewTestServer(t, func(cfg *config.Config) {
 		cfg.Bootstrap = true
