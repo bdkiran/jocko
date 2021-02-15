@@ -300,7 +300,9 @@ func (b *Broker) handleDeleteTopics(ctx *Context, reqs *protocol.DeleteTopicsReq
 		err := b.withTimeout(reqs.Timeout, func() protocol.Error {
 			// TODO: this will delete from fsm -- need to delete associated partitions, etc.
 			_, err := b.raftApply(structs.DeregisterTopicRequestType, structs.DeregisterTopicRequest{
-				structs.Topic: topic,
+				structs.Topic{
+					Topic: topic,
+				},
 			})
 			if err != nil {
 				return protocol.ErrUnknown.WithErr(err)
