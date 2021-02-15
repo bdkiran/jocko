@@ -71,7 +71,7 @@ func NewServer(config *config.Config, handler Handler) *Server {
 
 // Start starts the service.
 func (s *Server) Start(ctx context.Context) error {
-	zap.S().Debugw("Starting test server...")
+	zap.S().Debugw("Starting nolan server...")
 	//Resolve the tcp address from the server configuration
 	protocolAddr, err := net.ResolveTCPAddr("tcp", s.config.Addr)
 	if err != nil {

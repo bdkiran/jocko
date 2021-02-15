@@ -92,6 +92,7 @@ type Broker struct {
 
 //NewBroker instanciates a new broker
 func NewBroker(config *config.Config) (*Broker, error) {
+	zap.S().Debugf("Initializing a new broker with id: %d", config.ID)
 	b := &Broker{
 		config:        config,
 		shutdownCh:    make(chan struct{}),
@@ -216,6 +217,7 @@ DONE:
 // JoinLAN is used to have the broker join the gossip ring.
 // The given address should be another broker listening on the Serf address.
 func (b *Broker) JoinLAN(addrs ...string) protocol.Error {
+	zap.S().Debugf("Attempting to join lan: %s", addrs)
 	if _, err := b.serf.Join(addrs, true); err != nil {
 		return protocol.ErrUnknown.WithErr(err)
 	}
@@ -298,9 +300,7 @@ func (b *Broker) handleDeleteTopics(ctx *Context, reqs *protocol.DeleteTopicsReq
 		err := b.withTimeout(reqs.Timeout, func() protocol.Error {
 			// TODO: this will delete from fsm -- need to delete associated partitions, etc.
 			_, err := b.raftApply(structs.DeregisterTopicRequestType, structs.DeregisterTopicRequest{
-				structs.Topic{
-					Topic: topic,
-				},
+				structs.Topic: topic,
 			})
 			if err != nil {
 				return protocol.ErrUnknown.WithErr(err)

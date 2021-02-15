@@ -51,29 +51,9 @@ func init() {
 func run(cmd *cobra.Command, args []string) {
 	var err error
 
-	//log.SetPrefix(fmt.Sprintf("nolan: node id: %d: ", brokerCfg.ID))
-
-	// cfg := jaegercfg.Configuration{
-	// 	Sampler: &jaegercfg.SamplerConfig{
-	// 		Type:  jaeger.SamplerTypeConst,
-	// 		Param: 1,
-	// 	},
-	// 	Reporter: &jaegercfg.ReporterConfig{
-	// 		LogSpans: true,
-	// 	},
-	// }
-
-	// jLogger := jaegerlog.StdLogger
-	// jMetricsFactory := metrics.NullFactory
-
-	// tracer, closer, err := cfg.New(
-	// 	"nolan",
-	// 	jaegercfg.Logger(jLogger),
-	// 	jaegercfg.Metrics(jMetricsFactory),
-	// )
-	// if err != nil {
-	// 	panic(err)
-	// }
+	//Set the node name to avoid naming collision
+	nodeName := fmt.Sprintf("%s-%d", brokerCfg.NodeName, brokerCfg.ID)
+	brokerCfg.NodeName = nodeName
 
 	broker, err := nolan.NewBroker(brokerCfg)
 	if err != nil {

@@ -20,6 +20,7 @@ func (b *Broker) setupSerf(config *serf.Config, ch chan serf.Event, path string)
 	//Not sure how to use the global logger??
 	logger := zap.NewExample()
 	defer logger.Sync()
+	zap.S().Infof("broker/%d: Setting up serf for: %s", b.config.ID, b.config.NodeName)
 
 	config.Init()
 	config.NodeName = b.config.NodeName
@@ -81,6 +82,10 @@ func (b *Broker) lanNodeJoin(me serf.MemberEvent) {
 		// update server lookup
 		b.brokerLookup.AddBroker(meta)
 		if b.config.BootstrapExpect != 0 {
+			zap.S().Debugf("Setting up serf for %s", b.config.SerfLANConfig.NodeName)
+			if b.config.StartJoinAddrsLAN != nil {
+				b.JoinLAN(b.config.StartJoinAddrsLAN[0])
+			}
 			b.maybeBootstrap()
 		}
 	}

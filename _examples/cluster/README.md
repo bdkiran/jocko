@@ -5,25 +5,14 @@ This will start a local three node cluster.
 ## Build
 
 ```bash
-$ go get github.com/travisjeffery/jocko/...
-$ cd $GOPATH/src/github.com/travisjeffery/jocko/cmd/jocko
-$ go build
+$ cd /nolan
+
+$ go build ./...
+
+$ go install
 ```
 
-## Start a single node
-
-```bash
-$ nolan broker \
-          --data-dir="/tmp/nolan0" \
-          --broker-addr=127.0.0.1:9092 \
-          --raft-addr=127.0.0.1:9093 \
-          --serf-addr=127.0.0.1:9094 \
-          --bootstrap \
-          --bootstrap-expect=1 \
-          --id=1
-```
-
-## Start the nodes
+## Start multinode clusters
 
 ```bash
 $ nolan broker \
@@ -32,7 +21,7 @@ $ nolan broker \
           --raft-addr=127.0.0.1:9002 \
           --serf-addr=127.0.0.1:9003 \
           --bootstrap \
-          --bootstrap-expect=2 \
+          --bootstrap-expect=3 \
           --id=1
 
 $ nolan broker \
@@ -42,7 +31,7 @@ $ nolan broker \
           --serf-addr=127.0.0.1:9103 \
           --join=127.0.0.1:9003 \
           --join-wan=127.0.0.1:9003 \
-          --bootstrap-expect=2 \
+          --bootstrap-expect=3 \
           --id=2
 
 $ nolan broker \
